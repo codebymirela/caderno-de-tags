@@ -11,35 +11,25 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Figtree:wght@400;500;600;700&display=swap">
 <style>
 /* Layout: três painéis (tags | lista | folha) que viram uma pilha navegável no celular; modo foco deixa só a folha */
+/* Tema único escuro em tons de rosa: fundo ameixa, folha vinho, destaque rosa-chiclete */
 :root {
-  --bg: #eef0f3;
-  --panel: #f7f8fa;
-  --paper: #ffffff;
-  --fg: #1d2330;
-  --muted: #687185;
-  --line: #d9dde5;
-  --accent: #2f4fd1;
-  --accent-soft: #e3e8fb;
-  --danger: #b4232f;
-  --rule: #e9edf5;
-  --scrim: rgb(20 24 34 / .45);
+  --bg: #170d14;          /* fundo da lista: ameixa quase preta */
+  --panel: #1e1119;       /* barra de tags */
+  --paper: #25141f;       /* folha da nota */
+  --fg: #f7e4ef;          /* texto: rosa bem claro */
+  --muted: #b98fa8;       /* texto secundário: rosa acinzentado */
+  --line: #42253a;        /* bordas: vinho */
+  --accent: #ff85c0;      /* destaque: rosa vivo */
+  --accent-soft: #4d1f3c; /* fundo de item selecionado */
+  --danger: #ff7a66;      /* apagar: coral, para não confundir com o rosa */
+  --rule: #341c2c;        /* linhas do caderno e fundos de código */
+  --scrim: rgb(12 4 9 / .7);
   --font-ui: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-note: "IBM Plex Mono", ui-monospace, Consolas, monospace;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #12151c; --panel: #171b24; --paper: #1d222d; --fg: #e4e7ee; --muted: #949cb0;
-    --line: #2c3342; --accent: #8ea4ff; --accent-soft: #252e4f; --danger: #ff7b86; --rule: #252b37;
-    --scrim: rgb(0 0 0 / .6);
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #12151c; --panel: #171b24; --paper: #1d222d; --fg: #e4e7ee; --muted: #949cb0;
-  --line: #2c3342; --accent: #8ea4ff; --accent-soft: #252e4f; --danger: #ff7b86; --rule: #252b37;
-  --scrim: rgb(0 0 0 / .6);
   color-scheme: dark;
 }
+::selection { background: #8a2f63; color: #fff; }
+.body-in { caret-color: var(--accent); background-color: transparent; color: var(--fg); }
 html, body { height: 100%; }
 body { background: var(--bg); color: var(--fg); font-family: var(--font-ui); font-size: 14px; }
 button, input, textarea, select { font: inherit; color: inherit; }
@@ -333,7 +323,7 @@ button { cursor: pointer; }
   const escRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   function normTag(t) { return String(t).trim().replace(/^#/, "").toLowerCase().replace(/\s+/g, "-").replace(/[^\p{L}\p{N}_-]/gu, "").slice(0, 32); }
   function hashHue(tag) { let h = 0; for (const c of tag) h = (h * 31 + c.charCodeAt(0)) % 360; return h; }
-  function tagColor(tag) { const h = meta.colors[tag] != null ? meta.colors[tag] : hashHue(tag); return `hsl(${h} 62% 52%)`; }
+  function tagColor(tag) { const h = meta.colors[tag] != null ? meta.colors[tag] : hashHue(tag); return `hsl(${h} 72% 68%)`; }
   function fmt(ts) {
     const d = new Date(ts), now = new Date();
     if (d.toDateString() === now.toDateString()) return "hoje, " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
@@ -771,7 +761,7 @@ button { cursor: pointer; }
       head.firstChild.style.background = tagColor(tag);
       sw.replaceChildren(...HUES.map((h) => {
         const b = el("button", { class: "swatch", "aria-label": "Usar esta cor", "aria-pressed": String(meta.colors[tag] === h), onclick: () => setColor(h) });
-        b.style.background = `hsl(${h} 62% 52%)`;
+        b.style.background = `hsl(${h} 72% 68%)`;
         return b;
       }), el("button", { class: "btn small", "aria-pressed": String(meta.colors[tag] == null), text: "Automática", onclick: () => setColor(null) }));
     }
