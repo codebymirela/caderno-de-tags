@@ -147,6 +147,10 @@ button { cursor: pointer; }
   background-size: 100% 26px; background-attachment: local;
 }
 .body-in.dragging { outline: 2px dashed var(--accent); outline-offset: 6px; border-radius: 4px; }
+.thumbs { display: flex; gap: 8px; flex-wrap: wrap; }
+.thumbs img { height: 72px; width: auto; max-width: 160px; object-fit: cover; border-radius: 6px; border: 1px solid var(--line); background: var(--rule); }
+.thumbs img:not([src]) { width: 96px; }
+.thumbs .img-missing { font-size: 12px; padding: 6px 8px; }
 .help-row { display: flex; gap: 8px 16px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
 .md-help { font-size: 12px; color: var(--muted); font-family: var(--font-note); }
 .ac { position: sticky; bottom: 8px; align-self: flex-start; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 10px 30px rgb(0 0 0 / .4); padding: 4px; display: flex; flex-direction: column; min-width: 240px; max-width: 100%; z-index: 5; }
@@ -739,6 +743,7 @@ button { cursor: pointer; }
         const np = at >= 0 && at < p ? p + rep.length - ph.length : p;
         body.selectionStart = body.selectionEnd = Math.max(0, np);
       } else n.body = n.body.replace(ph, rep);
+      if (body.isConnected) body.dispatchEvent(new Event("input"));
       touch(id); renderList();
       if (failed) toast("Não foi possível enviar a imagem. Confira a conexão e tente de novo.");
       else if (!ref) toast("Use imagens PNG, JPG, WebP ou GIF de até 5 MB.");
@@ -1053,7 +1058,20 @@ button { cursor: pointer; }
         body.selectionStart = body.selectionEnd = before.length;
         n.body = body.value; hideAc(); drawTags(); changed();
       }
-      body.addEventListener("input", () => { n.body = body.value; when.textContent = "Editada agora"; drawTags(); changed(); updateAc(); });
+      // Miniaturas das imagens da nota, para não ver só o código durante a edição
+      const thumbs = el("div", { class: "thumbs", title: "Imagens desta nota. Em Visualizar elas aparecem no lugar onde estão no texto." });
+      let thumbKey = null;
+      function drawThumbs() {
+        const refs = [...n.body.matchAll(/!\[[^\]]*\]\(([^)\s]+)\)/g)].map((m) => m[1]);
+        const key = refs.join("|");
+        if (key === thumbKey) return;
+        thumbKey = key;
+        thumbs.innerHTML = refs.map((r) => imgHtml("imagem", r)).filter(Boolean).join("");
+        thumbs.hidden = !thumbs.children.length;
+        resolveImages(thumbs);
+      }
+      drawThumbs();
+      body.addEventListener("input", () => { n.body = body.value; when.textContent = "Editada agora"; drawTags(); drawThumbs(); changed(); updateAc(); });
       body.addEventListener("click", updateAc);
       body.addEventListener("blur", () => setTimeout(hideAc, 120));
       body.addEventListener("keydown", (e) => {
@@ -1075,7 +1093,7 @@ button { cursor: pointer; }
       });
       const imgBtn = el("button", { class: "link", type: "button", text: "+ Imagem", title: "Também dá para colar (Ctrl+V) ou arrastar uma imagem para o texto",
         onclick: () => { const fi = $("img-file"); fi.onchange = () => { const fs = [...fi.files]; fi.value = ""; if (fs.length) insertImages(fs, body, id); }; fi.click(); } });
-      content = el("div", { class: "editor" }, body, ac,
+      content = el("div", { class: "editor" }, body, ac, thumbs,
         el("div", { class: "help-row" },
           el("div", { class: "md-help", text: "**negrito**  # título  - lista  [ ] tarefa  [[nota]]  #tag" }),
           imgBtn));
