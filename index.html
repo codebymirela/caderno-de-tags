@@ -160,6 +160,15 @@ button { cursor: pointer; }
 }
 .body-in.dragging { outline: 2px dashed var(--accent); outline-offset: 6px; border-radius: 4px; }
 .thumbs { display: flex; gap: 8px; flex-wrap: wrap; }
+.thumbs img { cursor: pointer; }
+.thumbs img:hover { border-color: var(--accent); }
+.md .nimg[src] { cursor: pointer; }
+.md .nimg.selected { outline: 2px solid var(--accent); outline-offset: 2px; }
+.img-tools { position: absolute; z-index: 4; display: flex; flex-wrap: wrap; gap: 2px; padding: 3px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 6px 20px rgb(0 0 0 / .45); max-width: calc(100% - 12px); }
+.img-tools button { border: 0; background: none; padding: 4px 8px; border-radius: 5px; font-size: 12px; color: var(--fg); }
+.img-tools button:hover { background: var(--rule); }
+.img-tools button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.img-handle { position: absolute; z-index: 4; width: 18px; height: 18px; border-radius: 5px; background: var(--accent); border: 2px solid var(--paper); cursor: nwse-resize; touch-action: none; }
 .thumbs img { height: 72px; width: auto; max-width: 160px; object-fit: cover; border-radius: 6px; border: 1px solid var(--line); background: var(--rule); }
 .thumbs img:not([src]) { width: 96px; }
 .thumbs .img-missing { font-size: 12px; padding: 6px 8px; }
@@ -179,7 +188,7 @@ button { cursor: pointer; }
 .kbd { font-family: var(--font-note); font-size: 12px; border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; }
 
 /* Markdown renderizado */
-.md { font-size: 15px; line-height: 1.65; max-width: 72ch; overflow-wrap: anywhere; display: flex; flex-direction: column; gap: .7em; }
+.md { position: relative; font-size: 15px; line-height: 1.65; max-width: 72ch; overflow-wrap: anywhere; display: flex; flex-direction: column; gap: .7em; }
 .md > * { margin: 0; }
 .md h2 { font-size: 21px; line-height: 1.3; margin-top: .4em; text-wrap: balance; }
 .md h3 { font-size: 18px; line-height: 1.3; margin-top: .3em; }
@@ -339,6 +348,7 @@ button { cursor: pointer; }
   let editOnce = null;                                // nota nova abre sempre em edição
   let dbCol = null, dlCap = null, assetsCap = null, sb = null, sbUser = null;
   let onOverlayClose = null;
+  let pendingImg = null;                              // imagem a selecionar depois de redesenhar a nota
   const timers = {}, writing = {};
 
   // ---------- preferências e armazenamento local ----------
@@ -601,11 +611,29 @@ button { cursor: pointer; }
 
   // ---------- markdown ----------
   const TASK_RE = /^\s*(?:[-*+]\s+)?\[( |x|X)\]\s?(.*)$/;
-  function imgHtml(alt, src) {
-    const a = esc(alt || "imagem");
-    if (src.startsWith("img:")) return `<img class="nimg" data-key="${esc(src.slice(4))}" alt="${a}" loading="lazy">`;
-    if (/^https:\/\//.test(src) || /^\/(?!\/)/.test(src)) return `<img class="nimg" src="${esc(src)}" alt="${a}" loading="lazy">`;
+  // Tamanho da imagem no texto alternativo, como no Obsidian: ![imagem|50%](...) ou ![imagem|300](...)
+  function splitAlt(alt) {
+    const m = String(alt).match(/^(.*?)\s*\|\s*(\d{1,4})(%?)\s*$/);
+    if (!m) return { text: alt, size: null };
+    const v = +m[2];
+    return { text: m[1], size: m[3] ? Math.min(100, Math.max(5, v)) + "%" : Math.max(40, v) + "px" };
+  }
+  let imgSeen = {};
+  function imgHtml(alt, src, occ) {
+    const { text, size } = splitAlt(alt || "");
+    const attrs = `class="nimg" alt="${esc(text || "imagem")}" loading="lazy" data-ref="${esc(src)}" data-occ="${occ || 0}"${size ? ` style="width:${size}"` : ""}`;
+    if (src.startsWith("img:")) return `<img ${attrs} data-key="${esc(src.slice(4))}">`;
+    if (/^https:\/\//.test(src) || /^\/(?!\/)/.test(src)) return `<img ${attrs} src="${esc(src)}">`;
     return null;
+  }
+  function setImgSize(id, ref, occ, size) {
+    const n = notes[id]; if (!n) return;
+    let k = -1;
+    n.body = n.body.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (m, alt, src) => {
+      if (src !== ref || ++k !== occ) return m;
+      return `![${splitAlt(alt).text || "imagem"}${size ? "|" + size : ""}](${src})`;
+    });
+    touch(id);
   }
   function inlineMd(src) {
     const slots = [];
@@ -615,7 +643,11 @@ button { cursor: pointer; }
       const ex = !!findByTitle(t), tt = esc(t.trim());
       return keep(`<button type="button" class="wikilink${ex ? "" : " missing"}" data-title="${tt}" title="${ex ? "Abrir" : "Criar"} a nota “${tt}”">${esc((alias || t).trim())}</button>`);
     });
-    s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (m, alt, u) => { const h = imgHtml(alt, u); return h ? keep(h) : m; });
+    s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (m, alt, u) => {
+      if (!imgHtml(alt, u)) return m;
+      const occ = imgSeen[u] = (u in imgSeen ? imgSeen[u] : -1) + 1;
+      return keep(imgHtml(alt, u, occ));
+    });
     s = s.replace(/\[([^\]]+)\]\(((?:https?:\/\/|mailto:)[^\s)]+)\)/g, (_, t, u) => keep(`<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(t)}</a>`));
     s = s.replace(/\bhttps?:\/\/[^\s<>"'\u0000]+/g, (u) => {
       const tail = (u.match(/[.,;:!?)\]]+$/) || [""])[0];
@@ -637,6 +669,7 @@ button { cursor: pointer; }
   }
   function indentOf(line) { return Math.min(Math.floor(line.match(/^\s*/)[0].replace(/\t/g, "  ").length / 2), 4); }
   function renderMd(body) {
+    imgSeen = {};
     const lines = body.split("\n");
     let html = "", para = [], list = null;
     const flushPara = () => { if (para.length) { html += "<p>" + para.map(inlineMd).join("<br>") + "</p>"; para = []; } };
@@ -1038,8 +1071,61 @@ button { cursor: pointer; }
         const w = e.target.closest(".wikilink");
         if (w) openLink(w.dataset.title);
       });
-      content.addEventListener("dblclick", (e) => { if (!e.target.closest("a, input, label, button, img")) togglePreview(); });
-      resolveImages(content);
+      content.addEventListener("dblclick", (e) => { if (!e.target.closest("a, input, label, button, img, .img-tools, .img-handle")) togglePreview(); });
+
+      // Tamanho das imagens: clique na imagem para ver os tamanhos, ou arraste o canto
+      const tools = el("div", { class: "img-tools", role: "toolbar", "aria-label": "Tamanho da imagem" }); tools.hidden = true;
+      const handle = el("div", { class: "img-handle", title: "Arraste para mudar o tamanho" }); handle.hidden = true;
+      content.append(tools, handle);
+      let selImg = null;
+      const hideTools = () => { if (selImg) selImg.classList.remove("selected"); selImg = null; tools.hidden = true; handle.hidden = true; };
+      function placeTools() {
+        if (!selImg || !selImg.isConnected) { hideTools(); return; }
+        const cr = content.getBoundingClientRect(), ir = selImg.getBoundingClientRect();
+        tools.style.left = (ir.left - cr.left + 6) + "px"; tools.style.top = (ir.top - cr.top + 6) + "px";
+        handle.style.left = (ir.right - cr.left - 10) + "px"; handle.style.top = (ir.bottom - cr.top - 10) + "px";
+      }
+      function applySize(size) {
+        const ref = selImg.dataset.ref, occ = +selImg.dataset.occ;
+        setImgSize(id, ref, occ, size);
+        pendingImg = { ref, occ };
+        renderSheet();
+      }
+      function selectImg(img) {
+        if (selImg) selImg.classList.remove("selected");
+        selImg = img; img.classList.add("selected");
+        const sizes = [["Pequena", "25%"], ["Média", "50%"], ["Grande", "75%"], ["Inteira", "100%"], ["Original", ""]];
+        tools.replaceChildren(...sizes.map(([label, s]) => el("button", { type: "button", "aria-pressed": String(img.style.width === s), text: label,
+          onclick: (e) => { e.stopPropagation(); applySize(s); } })));
+        tools.hidden = false; handle.hidden = false;
+        placeTools();
+        if (!img.complete) img.addEventListener("load", placeTools, { once: true });
+      }
+      content.addEventListener("click", (e) => {
+        const img = e.target.closest("img.nimg[src]");
+        if (img) selectImg(img);
+        else if (!e.target.closest(".img-tools, .img-handle")) hideTools();
+      });
+      handle.addEventListener("pointerdown", (e) => {
+        if (!selImg) return;
+        e.preventDefault();
+        handle.setPointerCapture(e.pointerId);
+        const startX = e.clientX, startW = selImg.getBoundingClientRect().width;
+        const maxW = selImg.parentElement.getBoundingClientRect().width;
+        let w = startW;
+        const move = (ev) => { w = Math.max(40, Math.min(maxW, startW + ev.clientX - startX)); selImg.style.width = w + "px"; placeTools(); };
+        const up = () => {
+          handle.removeEventListener("pointermove", move); handle.removeEventListener("pointerup", up); handle.removeEventListener("pointercancel", up);
+          if (Math.abs(w - startW) > 2) applySize(Math.max(5, Math.min(100, Math.round((w / maxW) * 20) * 5)) + "%");
+        };
+        handle.addEventListener("pointermove", move); handle.addEventListener("pointerup", up); handle.addEventListener("pointercancel", up);
+      });
+      resolveImages(content).then(() => {
+        if (!pendingImg) return;
+        const p = pendingImg; pendingImg = null;
+        const img = [...content.querySelectorAll("img.nimg[src]")].find((i) => i.dataset.ref === p.ref && +i.dataset.occ === p.occ);
+        if (img) selectImg(img);
+      });
     } else {
       const body = el("textarea", { id: "note-body", class: "body-in", placeholder: "Escreva aqui…\n\nUse #tag no meio do texto, [[Outra nota]] para ligar notas, **negrito**, - listas e [ ] tarefas. Cole um print com Ctrl+V.", "aria-label": "Texto da nota", spellcheck: "true" });
       body.value = n.body;
@@ -1072,14 +1158,19 @@ button { cursor: pointer; }
         n.body = body.value; hideAc(); drawTags(); changed();
       }
       // Miniaturas das imagens da nota, para não ver só o código durante a edição
-      const thumbs = el("div", { class: "thumbs", title: "Imagens desta nota. Em Visualizar elas aparecem no lugar onde estão no texto." });
+      const thumbs = el("div", { class: "thumbs", title: "Clique numa imagem para ver na nota e ajustar o tamanho" });
+      thumbs.addEventListener("click", (e) => {
+        const img = e.target.closest("img.nimg");
+        if (img) { pendingImg = { ref: img.dataset.ref, occ: +img.dataset.occ }; togglePreview(); }
+      });
       let thumbKey = null;
       function drawThumbs() {
         const refs = [...n.body.matchAll(/!\[[^\]]*\]\(([^)\s]+)\)/g)].map((m) => m[1]);
         const key = refs.join("|");
         if (key === thumbKey) return;
         thumbKey = key;
-        thumbs.innerHTML = refs.map((r) => imgHtml("imagem", r)).filter(Boolean).join("");
+        const seen = {};
+        thumbs.innerHTML = refs.map((r) => { if (!imgHtml("imagem", r)) return ""; seen[r] = (r in seen ? seen[r] : -1) + 1; return imgHtml("imagem", r, seen[r]); }).join("");
         thumbs.hidden = !thumbs.children.length;
         resolveImages(thumbs);
       }
