@@ -1,5 +1,6 @@
 # Arquivos do repositório que não vão para o site
 .git
+.wrangler
 .claude
 .gitignore
 .assetsignore
