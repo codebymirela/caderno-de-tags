@@ -2,11 +2,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Figtree:wght@400;500;600;700&display=swap">
 <style>
-/* Layout: três painéis (tags | lista | folha) que viram uma pilha navegável no celular; modo foco deixa só a folha */
+/* Layout: três painéis (pastas e tags | lista | folha) que viram uma pilha navegável no celular; modo foco deixa só a folha */
 /* Tema único escuro em tons de rosa: fundo ameixa, folha vinho, destaque rosa-chiclete */
 :root {
   --bg: #170d14;          /* fundo da lista: ameixa quase preta */
-  --panel: #1e1119;       /* barra de tags */
+  --panel: #1e1119;       /* barra lateral */
   --paper: #25141f;       /* folha da nota */
   --fg: #f7e4ef;          /* texto: rosa bem claro */
   --muted: #b98fa8;       /* texto secundário: rosa acinzentado */
@@ -21,20 +21,24 @@
   color-scheme: dark;
 }
 ::selection { background: #8a2f63; color: #fff; }
-.body-in { caret-color: var(--accent); background-color: transparent; color: var(--fg); }
 html, body { height: 100%; }
 body { background: var(--bg); color: var(--fg); font-family: var(--font-ui); font-size: 14px; }
 button, input, textarea, select { font: inherit; color: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-.app { height: 100%; display: grid; grid-template-columns: 220px 310px 1fr; }
+.app { height: 100%; display: grid; grid-template-columns: 240px 310px 1fr; }
 
-/* Barra de tags */
+/* Barra lateral */
 .tags { background: var(--panel); border-right: 1px solid var(--line); padding: 18px 12px; display: flex; flex-direction: column; gap: 18px; overflow-y: auto; }
 .brand { font-weight: 700; font-size: 17px; padding-inline: 8px; letter-spacing: -0.01em; }
 .brand small { display: block; font-weight: 400; font-size: 12px; color: var(--muted); margin-top: 2px; }
-.label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); padding-inline: 8px; margin-bottom: 4px; }
+.tags nav { display: flex; flex-direction: column; gap: 4px; }
+.label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); padding-inline: 8px; margin: 10px 0 4px; }
+.sec-head { display: flex; align-items: center; justify-content: space-between; margin: 10px 0 2px; }
+.sec-head .label { margin: 0; }
+.add-btn { border: 0; background: none; color: var(--muted); font-size: 13px; font-weight: 600; padding: 2px 8px; border-radius: 6px; }
+.add-btn:hover { color: var(--accent); background: var(--rule); }
 .taglist { display: flex; flex-direction: column; gap: 1px; }
 .tagrow { display: flex; align-items: center; border-radius: 6px; }
 .tagrow:hover { background: var(--rule); }
@@ -50,6 +54,14 @@ button { cursor: pointer; }
   .tagmore { opacity: 0; }
   .tagrow:hover .tagmore, .tagmore:focus-visible { opacity: 1; }
 }
+.frow { padding-left: calc(var(--depth, 0) * 14px); }
+.twisty { border: 0; background: none; color: var(--muted); width: 18px; height: 22px; padding: 0; font-size: 10px; flex: none; border-radius: 4px; }
+.twisty[aria-expanded="true"] > span { transform: rotate(90deg); }
+.twisty > span { display: inline-block; }
+.twisty-sp { width: 18px; flex: none; }
+.ficon { width: 14px; height: 14px; flex: none; color: var(--muted); display: inline-flex; }
+.ficon svg { width: 100%; height: 100%; }
+.drop-over { outline: 2px dashed var(--accent); outline-offset: -2px; background: var(--accent-soft) !important; }
 .tools summary { cursor: pointer; font-size: 13px; font-weight: 600; padding: 6px 8px; border-radius: 6px; color: var(--muted); }
 .tools summary:hover { color: var(--fg); }
 .tools-body { display: flex; flex-direction: column; gap: 10px; padding: 8px 0 0; }
@@ -72,8 +84,11 @@ button { cursor: pointer; }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--paper); }
 .btn.primary:hover { filter: brightness(1.08); }
 .btn.danger { background: var(--danger); border-color: var(--danger); color: var(--paper); }
-.filter-line { font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; align-items: center; }
-.filter-line .link { border: 0; background: none; color: var(--accent); padding: 0; font-size: 12px; }
+.filter-line { font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; gap: 6px 10px; flex-wrap: wrap; align-items: center; }
+.link { border: 0; background: none; color: var(--accent); padding: 0; font-size: 12px; font-weight: 600; }
+.crumbs { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; min-width: 0; }
+.crumbs .cur { color: var(--fg); font-weight: 600; }
+.crumb-actions { display: flex; gap: 12px; }
 .notes { overflow-y: auto; flex: 1; }
 .item { width: 100%; text-align: left; border: 0; border-bottom: 1px solid var(--line); background: none; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
 .item:hover { background: var(--panel); }
@@ -81,6 +96,12 @@ button { cursor: pointer; }
 .item .t { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .item .p { color: var(--muted); font-size: 13px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.4; }
 .item .meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.folder-item { flex-direction: row; align-items: center; gap: 10px; background: var(--panel); }
+.folder-item .t { flex: 1; min-width: 0; }
+.folder-item .ficon { width: 16px; height: 16px; }
+.folder-item .n { font-size: 12px; color: var(--muted); }
+.fpath { display: inline-flex; align-items: center; gap: 4px; }
+.fpath .ficon { width: 11px; height: 11px; }
 .chip { display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px; border-radius: 99px; font-size: 11px; font-weight: 500; background: var(--rule); color: var(--fg); }
 .chip .dot { width: 6px; height: 6px; border-radius: 50%; flex: none; }
 .pin { color: var(--accent); font-weight: 700; }
@@ -106,20 +127,38 @@ button { cursor: pointer; }
 .title-in { border: 0; background: none; font-size: 26px; font-weight: 700; letter-spacing: -0.015em; padding: 0; width: 100%; outline: none; }
 .title-in::placeholder, .body-in::placeholder { color: var(--muted); opacity: .6; }
 .title-view { font-size: 26px; font-weight: 700; letter-spacing: -0.015em; margin: 0; text-wrap: balance; overflow-wrap: anywhere; }
+.note-meta-row { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.folder-pick { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+.folder-sel { border: 1px solid var(--line); background: var(--panel); border-radius: 99px; padding: 3px 10px; font-size: 12px; color: var(--fg); max-width: 220px; }
 .tag-edit { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .tag-edit .chip { padding: 3px 4px 3px 9px; font-size: 12px; }
-.tag-edit .chip.inline { padding-right: 9px; background: none; border: 1px dashed var(--line); }
+.tag-edit .chip.inline, .tag-edit .chip.inherit { padding-right: 9px; background: none; border: 1px dashed var(--line); }
+.tag-edit .chip.inherit { border-style: solid; color: var(--muted); }
 .tag-edit .chip button { border: 0; background: none; color: var(--muted); padding: 0 4px; line-height: 1; font-size: 14px; }
 .tag-edit .chip button:hover { color: var(--danger); }
 .tag-in { border: 1px dashed var(--line); background: none; border-radius: 99px; padding: 3px 10px; font-size: 12px; min-width: 0; width: 150px; outline: none; }
 .tag-in:focus { border-color: var(--accent); border-style: solid; }
+.editor { display: flex; flex-direction: column; gap: 8px; flex: 1; position: relative; }
 .body-in {
   flex: 1; min-height: 50vh; width: 100%; resize: none; border: 0; outline: none; padding: 0;
   font-family: var(--font-note); font-size: 14px; line-height: 26px;
+  background-color: transparent; color: var(--fg); caret-color: var(--accent);
   background-image: linear-gradient(to bottom, transparent 25px, var(--rule) 25px);
   background-size: 100% 26px; background-attachment: local;
 }
+.body-in.dragging { outline: 2px dashed var(--accent); outline-offset: 6px; border-radius: 4px; }
+.help-row { display: flex; gap: 8px 16px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
 .md-help { font-size: 12px; color: var(--muted); font-family: var(--font-note); }
+.ac { position: sticky; bottom: 8px; align-self: flex-start; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 10px 30px rgb(0 0 0 / .4); padding: 4px; display: flex; flex-direction: column; min-width: 240px; max-width: 100%; z-index: 5; }
+.ac .ac-title { font-size: 11px; color: var(--muted); padding: 4px 10px; text-transform: uppercase; letter-spacing: .08em; }
+.ac button { border: 0; background: none; text-align: left; padding: 7px 10px; border-radius: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ac button[aria-selected="true"] { background: var(--accent-soft); color: var(--accent); }
+.backlinks { border-top: 1px solid var(--line); padding-top: 14px; display: flex; flex-direction: column; gap: 8px; max-width: 72ch; }
+.backlinks .label { padding: 0; margin: 0; }
+.backlinks ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.backlinks li { min-width: 0; }
+.backlinks button { border: 0; background: none; padding: 0; color: var(--accent); text-align: left; font-weight: 600; }
+.backlinks .ctx { display: block; color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-note); }
 .sheet-empty { flex: 1; display: grid; place-items: center; color: var(--muted); padding: 24px; text-align: center; line-height: 1.8; }
 .kbd { font-family: var(--font-note); font-size: 12px; border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; }
 
@@ -144,15 +183,22 @@ button { cursor: pointer; }
 .md .tagref { border: 0; cursor: pointer; font-size: .82em; vertical-align: 1px; }
 .md .tagref:hover { background: var(--accent-soft); }
 .md .muted { color: var(--muted); }
+.md img { display: block; max-width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--line); background: var(--rule); margin-block: 4px; }
+.md img:not([src]) { width: 220px; height: 120px; }
+.img-missing { display: inline-block; padding: 10px 12px; border: 1px dashed var(--line); border-radius: 8px; color: var(--muted); font-size: 13px; }
+.wikilink { border: 0; background: none; padding: 0; color: var(--accent); font: inherit; font-weight: 600; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; cursor: pointer; }
+.wikilink.missing { color: var(--muted); text-decoration-style: dashed; font-weight: 500; }
 
 /* Painel sobreposto e aviso */
 .overlay { position: fixed; inset: 0; background: var(--scrim); display: grid; place-items: center; padding: 16px; z-index: 20; }
-.panel { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 20px; width: min(420px, 100%); display: flex; flex-direction: column; gap: 14px; box-shadow: 0 20px 50px rgb(0 0 0 / .25); }
-.panel h2 { margin: 0; font-size: 18px; display: flex; align-items: center; gap: 8px; }
+.panel { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 20px; width: min(440px, 100%); max-height: calc(100% - 32px); overflow-y: auto; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 20px 50px rgb(0 0 0 / .35); }
+.panel h2 { margin: 0; font-size: 18px; display: flex; align-items: center; gap: 8px; overflow-wrap: anywhere; }
 .panel h2 .dot { width: 10px; height: 10px; border-radius: 50%; }
+.panel h2 .ficon { width: 18px; height: 18px; }
 .panel .hint { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.45; }
 .panel section { display: flex; flex-direction: column; gap: 8px; }
 .panel .label { padding: 0; margin: 0; }
+.panel select.field { padding: 7px 8px; }
 .swatches { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .swatch { width: 26px; height: 26px; border-radius: 50%; border: 2px solid transparent; padding: 0; }
 .swatch[aria-pressed="true"] { border-color: var(--fg); box-shadow: inset 0 0 0 2px var(--paper); }
@@ -165,17 +211,23 @@ button { cursor: pointer; }
 .app.focus .tags, .app.focus .list { display: none; }
 .app.focus .sheet-body > * { width: 100%; max-width: 760px; margin-inline: auto; }
 
-/* Celular: uma coluna por vez */
+/* Celular: uma coluna por vez; a barra lateral vira uma fileira de botões */
 @media (max-width: 820px) {
   .app { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
   .tags { border-right: 0; border-bottom: 1px solid var(--line); padding: 12px 16px; gap: 10px; }
-  .tags nav .label, .save-state { display: none; }
+  .save-state { display: none; }
   .brand { padding: 0; }
-  .taglist { flex-direction: row; overflow-x: auto; gap: 6px; padding-bottom: 2px; }
+  .tags nav { flex-direction: row; overflow-x: auto; gap: 6px; padding-bottom: 2px; }
+  .tags nav .taglist, .sec-head { display: contents; }
+  .tags nav .label { display: none; }
+  .add-btn { border: 1px solid var(--line); border-radius: 99px; padding: 5px 11px; flex: none; order: 99; }
   .tagrow { flex: none; border: 1px solid var(--line); border-radius: 99px; }
-  .tagrow.trash-row { margin: 0; padding: 0; border-top: 1px solid var(--line); border-radius: 99px; }
+  .tagrow.trash-row { margin: 0; padding: 0; border-top: 1px solid var(--line); border-radius: 99px; order: 100; }
   .tagbtn { padding: 5px 4px 5px 11px; border-radius: 99px; }
   .tagrow > .tagbtn:only-child { padding-right: 11px; }
+  .frow { padding-left: 0; }
+  .frow:not([data-depth="0"]) { display: none; }
+  .twisty, .twisty-sp { display: none; }
   .tools summary { padding-inline: 0; }
   .tool-btns, .sync { padding-inline: 0; }
   .list, .sheet { grid-row: 2; grid-column: 1; min-height: 0; border-right: 0; }
@@ -189,21 +241,29 @@ button { cursor: pointer; }
 }
 @media (prefers-reduced-motion: no-preference) {
   .item, .tagrow, .btn, .ghost { transition: background-color .12s, border-color .12s, color .12s; }
+  .twisty > span { transition: transform .12s; }
 }
 </style>
 
 <div class="app" id="app">
   <aside class="tags">
     <div class="brand">Caderno de Tags<small id="count-line">carregando…</small></div>
-    <nav aria-label="Filtrar notas">
-      <div class="label">Filtrar</div>
+    <nav aria-label="Navegar nas notas">
+      <div class="taglist" id="mainlist"></div>
+      <div class="sec-head">
+        <div class="label">Pastas</div>
+        <button class="add-btn" id="new-folder" title="Criar uma pasta">+ Pasta</button>
+      </div>
+      <div class="taglist" id="folderlist"></div>
+      <div class="label" id="tags-label">Tags</div>
       <div class="taglist" id="taglist"></div>
+      <div class="taglist" id="trashlist"></div>
     </nav>
     <details class="tools">
       <summary>Backup e sincronização</summary>
       <div class="tools-body">
         <div class="tool-btns">
-          <button class="btn small" id="exp-json" title="Todas as notas, inclusive a lixeira, para importar depois">Exportar JSON</button>
+          <button class="btn small" id="exp-json" title="Todas as notas e pastas, inclusive a lixeira, para importar depois">Exportar JSON</button>
           <button class="btn small" id="exp-md" title="Todas as notas em um arquivo .md para ler em qualquer editor">Exportar Markdown</button>
           <button class="btn small" id="imp-btn" title="Arquivos .json, .md ou .txt">Importar…</button>
           <input type="file" id="imp-file" accept=".json,.md,.markdown,.txt" multiple hidden>
@@ -236,6 +296,7 @@ button { cursor: pointer; }
 </div>
 <div class="overlay" id="overlay" hidden></div>
 <div class="toast" id="toast" role="status" hidden></div>
+<input type="file" id="img-file" accept="image/png,image/jpeg,image/webp,image/gif" multiple hidden>
 
 <script>
 (() => {
@@ -247,23 +308,27 @@ button { cursor: pointer; }
   const K = { notes: "caderno-tags-notas", meta: "caderno-tags-meta", tombs: "caderno-tags-apagadas", prefs: "caderno-tags-prefs" };
   const DAY = 864e5, TRASH_DAYS = 30;
   const HUES = [0, 25, 45, 95, 160, 195, 225, 265, 310];
+  const BUCKET = "imagens", MAX_IMG = 5 * 1024 * 1024;
+  const FOLDER_SVG = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 4.5A1.5 1.5 0 0 1 3 3h3l1.5 1.5H13a1.5 1.5 0 0 1 1.5 1.5v6a1.5 1.5 0 0 1-1.5 1.5H3A1.5 1.5 0 0 1 1.5 12z" fill="currentColor"/></svg>';
 
-  let notes = {};                         // id -> nota
-  let meta = { colors: {}, updated: 0 };  // cores escolhidas para as tags
-  let tombs = {};                         // notas apagadas para sempre (para a sincronização não trazê-las de volta)
-  let current = null;                     // nota aberta
-  let view = null;                        // null = todas | tag | "__none" | "__trash"
+  let notes = {};                                     // id -> nota
+  let meta = { colors: {}, folders: {}, updated: 0 }; // cores das tags e pastas
+  let tombs = {};                                     // notas apagadas para sempre (para a sincronização não trazê-las de volta)
+  let current = null;                                 // nota aberta
+  let view = null;                                    // null = todas | tag | "__none" | "__trash" | "f:<id>" (pasta) | "f:" (sem pasta)
   let query = "";
-  let mode = "local";                     // "local" | "db" (claude.ai) | "cloud" (Supabase)
+  let mode = "local";                                 // "local" | "db" (claude.ai) | "cloud" (Supabase)
   let ready = false;
-  let editOnce = null;                    // nota nova abre sempre em edição
-  let dbCol = null, dlCap = null, sb = null, sbUser = null;
+  let editOnce = null;                                // nota nova abre sempre em edição
+  let dbCol = null, dlCap = null, assetsCap = null, sb = null, sbUser = null;
+  let onOverlayClose = null;
   const timers = {}, writing = {};
 
   // ---------- preferências e armazenamento local ----------
   function lsGet(k, fb) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fb; } catch { return fb; } }
   function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
-  const prefs = Object.assign({ sort: "updated", preview: false }, lsGet(K.prefs, {}));
+  const prefs = Object.assign({ sort: "updated", preview: false, open: [] }, lsGet(K.prefs, {}));
+  if (!Array.isArray(prefs.open)) prefs.open = [];
   const savePrefs = () => lsSet(K.prefs, prefs);
   function saveLocal() { if (mode === "db") return; lsSet(K.notes, notes); lsSet(K.meta, meta); lsSet(K.tombs, tombs); }
   function setState(t) { $("save-state").textContent = t; }
@@ -282,7 +347,7 @@ button { cursor: pointer; }
     try {
       do {
         writing[id].again = false;
-        if (id === "__meta") await dbCol.doc(id).set({ ...meta });
+        if (id === "__meta") await dbCol.doc(id).set(JSON.parse(JSON.stringify(meta)));
         else if (notes[id]) await dbCol.doc(id).set({ ...notes[id] });
         else await dbCol.doc(id).delete();
       } while (writing[id].again);
@@ -297,15 +362,25 @@ button { cursor: pointer; }
     timers[id] = setTimeout(() => { delete timers[id]; persist(id); }, 600);
   }
   function touch(id) { notes[id].updated = Date.now(); scheduleSave(id); }
+  function saveMeta() { meta.updated = Date.now(); persist("__meta"); }
+  const IMG_REF_RE = /!\[[^\]]*\]\(img:([^)\s]+)\)/g;
+  const imageKeys = (body) => [...body.matchAll(IMG_REF_RE)].map((m) => m[1]);
   function purge(ids) {
     ids = [].concat(ids);
+    const keys = new Set();
     for (const id of ids) {
+      if (notes[id]) imageKeys(notes[id].body).forEach((k) => keys.add(k));
       clearTimeout(timers[id]); delete timers[id];
       delete notes[id];
       if (mode !== "db") tombs[id] = { purged: true, updated: Date.now() };
       if (current === id) current = null;
     }
     persist(ids);
+    // apaga do Storage as imagens que nenhuma outra nota usa
+    if (keys.size && mode === "cloud" && sb) {
+      for (const n of Object.values(notes)) imageKeys(n.body).forEach((k) => keys.delete(k));
+      if (keys.size) sb.storage.from(BUCKET).remove([...keys]).catch(() => {});
+    }
   }
 
   // ---------- utilidades ----------
@@ -340,15 +415,105 @@ button { cursor: pointer; }
       tags: Array.isArray(d.tags) ? [...new Set(d.tags.map(normTag).filter(Boolean))] : [],
       pinned: !!d.pinned, created: Number(d.created) || Date.now(), updated: Number(d.updated) || Date.now(),
       deletedAt: Number(d.deletedAt) || null,
+      folderId: typeof d.folderId === "string" && d.folderId ? d.folderId : null,
     };
   }
   function sanitizeMeta(d) {
-    const colors = {};
+    const colors = {}, folders = {};
     if (d && d.colors && typeof d.colors === "object") for (const [t, h] of Object.entries(d.colors)) if (Number.isFinite(+h)) colors[normTag(t)] = +h;
-    return { colors, updated: Number(d && d.updated) || 0 };
+    if (d && d.folders && typeof d.folders === "object") {
+      for (const [id, f] of Object.entries(d.folders)) {
+        if (!f || typeof f !== "object") continue;
+        folders[id] = {
+          name: String(f.name || "Pasta").slice(0, 80),
+          parentId: typeof f.parentId === "string" && f.parentId ? f.parentId : null,
+          tags: Array.isArray(f.tags) ? [...new Set(f.tags.map(normTag).filter(Boolean))] : [],
+          created: Number(f.created) || Date.now(),
+        };
+      }
+      for (const [id, f] of Object.entries(folders)) {
+        if (f.parentId && !folders[f.parentId]) f.parentId = null;
+        const seen = new Set([id]); let p = f.parentId;
+        while (p) { if (seen.has(p)) { f.parentId = null; break; } seen.add(p); p = folders[p] && folders[p].parentId; }
+      }
+    }
+    return { colors, folders, updated: Number(d && d.updated) || 0 };
   }
 
-  // ---------- tags escritas no texto ----------
+  // ---------- pastas ----------
+  const folderOf = (n) => (n.folderId && meta.folders[n.folderId] ? n.folderId : null);
+  function childrenOf(pid) {
+    return Object.entries(meta.folders).filter(([, f]) => f.parentId === pid).map(([id, f]) => ({ id, ...f }))
+      .sort((a, b) => a.name.localeCompare(b.name, "pt-BR", { sensitivity: "base" }));
+  }
+  function chain(fid) {
+    const out = [], seen = new Set(); let p = fid;
+    while (p && meta.folders[p] && !seen.has(p)) { seen.add(p); out.unshift(p); p = meta.folders[p].parentId; }
+    return out;
+  }
+  function descendants(fid) {
+    const out = new Set([fid]); let added = true;
+    while (added) { added = false; for (const [id, f] of Object.entries(meta.folders)) if (!out.has(id) && out.has(f.parentId)) { out.add(id); added = true; } }
+    return out;
+  }
+  const folderTags = (fid) => [...new Set(chain(fid).flatMap((id) => meta.folders[id].tags))];
+  const folderPathName = (fid) => chain(fid).map((id) => meta.folders[id].name).join(" / ");
+  function folderIcon(fid) {
+    const s = el("span", { class: "ficon" }); s.innerHTML = FOLDER_SVG;
+    const t = fid && meta.folders[fid] && meta.folders[fid].tags[0];
+    if (t) s.style.color = tagColor(t);
+    return s;
+  }
+  function folderOptions(sel, banned) {
+    (function walk(pid, depth) {
+      for (const c of childrenOf(pid)) {
+        if (banned && banned.has(c.id)) continue;
+        sel.append(el("option", { value: c.id, text: "   ".repeat(depth) + c.name }));
+        walk(c.id, depth + 1);
+      }
+    })(null, 0);
+  }
+  function expand(fid) { for (const id of chain(fid)) if (!prefs.open.includes(id)) prefs.open.push(id); savePrefs(); }
+  function newFolder(parentId) {
+    const id = "f" + uid();
+    meta.folders[id] = { name: "Nova pasta", parentId: parentId || null, tags: [], created: Date.now() };
+    if (parentId) expand(parentId);
+    saveMeta();
+    view = "f:" + id;
+    renderAll();
+    openFolderEditor(id, true);
+  }
+  function deleteFolder(fid) {
+    const f = meta.folders[fid]; if (!f) return;
+    const parent = f.parentId, moved = [];
+    for (const g of Object.values(meta.folders)) if (g.parentId === fid) g.parentId = parent;
+    for (const [id, n] of Object.entries(notes)) if (n.folderId === fid) { n.folderId = parent; n.updated = Date.now(); moved.push(id); }
+    delete meta.folders[fid];
+    if (view === "f:" + fid) view = parent ? "f:" + parent : null;
+    saveMeta();
+    if (moved.length) persist(moved);
+    renderAll();
+    toast(`Pasta “${f.name}” apagada`);
+  }
+  function moveNote(id, fid) {
+    const n = notes[id]; if (!n) return;
+    fid = fid && meta.folders[fid] ? fid : null;
+    if ((n.folderId || null) === fid) return;
+    n.folderId = fid; touch(id);
+    renderNav(); renderList(); if (id === current) renderSheet();
+    toast(`Nota movida para ${fid ? "“" + meta.folders[fid].name + "”" : "Sem pasta"}`);
+  }
+  function ensureFolderPath(path) {
+    let parent = null;
+    for (const part of path.split("/").map((s) => s.trim()).filter(Boolean)) {
+      const found = childrenOf(parent).find((f) => f.name.toLowerCase() === part.toLowerCase());
+      if (found) parent = found.id;
+      else { const id = "f" + uid(); meta.folders[id] = { name: part.slice(0, 80), parentId: parent, tags: [], created: Date.now() }; parent = id; }
+    }
+    return parent;
+  }
+
+  // ---------- tags ----------
   const TAG_RE = /(^|[\s(\[,;*_>])#([\p{L}\p{N}_][\p{L}\p{N}_-]*)/gu;
   function bodyTags(body) {
     const out = []; let code = false;
@@ -362,15 +527,78 @@ button { cursor: pointer; }
     }
     return out;
   }
-  const noteTags = (n) => [...new Set([...n.tags, ...bodyTags(n.body)])];
-  const allTags = () => [...new Set(Object.values(notes).filter((n) => !n.deletedAt).flatMap(noteTags))].sort((a, b) => a.localeCompare(b, "pt-BR"));
+  const ownTags = (n) => [...new Set([...n.tags, ...bodyTags(n.body)])];
+  const noteTags = (n) => [...new Set([...ownTags(n), ...folderTags(folderOf(n))])];
+  const allTags = () => [...new Set([
+    ...Object.values(notes).filter((n) => !n.deletedAt).flatMap(ownTags),
+    ...Object.values(meta.folders).flatMap((f) => f.tags),
+  ])].sort((a, b) => a.localeCompare(b, "pt-BR"));
+
+  // ---------- links entre notas ----------
+  const WIKI_RE = /\[\[([^\[\]|\n]+?)(?:\|([^\[\]\n]+?))?\]\]/g;
+  const titleKey = (t) => String(t).trim().toLowerCase();
+  function findByTitle(t) {
+    const k = titleKey(t); if (!k) return null;
+    let best = null;
+    for (const [id, n] of Object.entries(notes)) if (!n.deletedAt && titleKey(n.title) === k && (!best || n.updated > notes[best].updated)) best = id;
+    return best;
+  }
+  function backlinksOf(id) {
+    const k = titleKey(notes[id].title); if (!k) return [];
+    const out = [];
+    for (const [oid, o] of Object.entries(notes)) {
+      if (oid === id || o.deletedAt) continue;
+      for (const m of o.body.matchAll(WIKI_RE)) {
+        if (titleKey(m[1]) !== k) continue;
+        const line = o.body.split("\n").find((l) => l.includes(m[0])) || "";
+        out.push({ id: oid, title: o.title || "Sem título", ctx: line.trim(), updated: o.updated });
+        break;
+      }
+    }
+    return out.sort((a, b) => b.updated - a.updated);
+  }
+  function openLink(title) {
+    const t = title.trim(); if (!t) return;
+    let id = findByTitle(t);
+    if (!id) {
+      id = uid();
+      const now = Date.now(), cur = current && notes[current];
+      notes[id] = { title: t, body: "", tags: [], pinned: false, created: now, updated: now, deletedAt: null, folderId: cur ? cur.folderId : null };
+      editOnce = id;
+      persist(id);
+      toast(`Nota “${t}” criada`);
+    }
+    open(id); renderNav();
+  }
+  function relinkTitle(oldT, newT, selfId) {
+    if (!titleKey(oldT) || !newT.trim() || titleKey(oldT) === titleKey(newT)) return;
+    const re = new RegExp(`\\[\\[\\s*${escRe(oldT.trim())}\\s*(\\|[^\\]\\n]*)?\\]\\]`, "gi");
+    const ids = [];
+    for (const [id, n] of Object.entries(notes)) {
+      if (id === selfId) continue;
+      const b = n.body.replace(re, (_, alias) => `[[${newT.trim()}${alias || ""}]]`);
+      if (b !== n.body) { n.body = b; n.updated = Date.now(); ids.push(id); }
+    }
+    if (ids.length) { persist(ids); renderList(); toast(`Links atualizados em ${ids.length} ${ids.length === 1 ? "nota" : "notas"}`); }
+  }
 
   // ---------- markdown ----------
   const TASK_RE = /^\s*(?:[-*+]\s+)?\[( |x|X)\]\s?(.*)$/;
+  function imgHtml(alt, src) {
+    const a = esc(alt || "imagem");
+    if (src.startsWith("img:")) return `<img class="nimg" data-key="${esc(src.slice(4))}" alt="${a}" loading="lazy">`;
+    if (/^https:\/\//.test(src) || /^\/(?!\/)/.test(src)) return `<img class="nimg" src="${esc(src)}" alt="${a}" loading="lazy">`;
+    return null;
+  }
   function inlineMd(src) {
     const slots = [];
     const keep = (h) => "\u0000" + (slots.push(h) - 1) + "\u0000";
     let s = src.replace(/`([^`]+)`/g, (_, c) => keep("<code>" + esc(c) + "</code>"));
+    s = s.replace(WIKI_RE, (_, t, alias) => {
+      const ex = !!findByTitle(t), tt = esc(t.trim());
+      return keep(`<button type="button" class="wikilink${ex ? "" : " missing"}" data-title="${tt}" title="${ex ? "Abrir" : "Criar"} a nota “${tt}”">${esc((alias || t).trim())}</button>`);
+    });
+    s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (m, alt, u) => { const h = imgHtml(alt, u); return h ? keep(h) : m; });
     s = s.replace(/\[([^\]]+)\]\(((?:https?:\/\/|mailto:)[^\s)]+)\)/g, (_, t, u) => keep(`<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(t)}</a>`));
     s = s.replace(/\bhttps?:\/\/[^\s<>"'\u0000]+/g, (u) => {
       const tail = (u.match(/[.,;:!?)\]]+$/) || [""])[0];
@@ -437,8 +665,84 @@ button { cursor: pointer; }
     return body.split("\n").filter((l) => l.trim() && !/^\s*```/.test(l)).slice(0, 3).map((l) => l
       .replace(TASK_RE, (_, x, t) => (x === " " ? "☐ " : "☑ ") + t)
       .replace(/^\s*(#{1,6}|>|[-*+]|\d+[.)])\s+/, "")
+      .replace(/!\[[^\]]*\]\([^)]*\)/g, "[imagem]")
+      .replace(WIKI_RE, (_, t, a) => (a || t).trim())
       .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
       .replace(/\*\*|__|~~|`/g, "")).join(" · ");
+  }
+
+  // ---------- imagens ----------
+  const signed = {}; // caminho no Storage -> { url, exp }
+  async function resolveImages(root) {
+    const imgs = [...root.querySelectorAll("img[data-key]")];
+    if (!imgs.length) return;
+    const missing = (i, msg) => i.replaceWith(el("span", { class: "img-missing", text: msg }));
+    if (mode !== "cloud" || !sb) { imgs.forEach((i) => missing(i, "Imagem guardada na nuvem: entre na sincronização para ver.")); return; }
+    const need = [...new Set(imgs.map((i) => i.dataset.key))].filter((k) => !(signed[k] && signed[k].exp > Date.now()));
+    if (need.length) {
+      const { data, error } = await sb.storage.from(BUCKET).createSignedUrls(need, 3600);
+      if (!error && data) for (const d of data) if (d.signedUrl && d.path) signed[d.path] = { url: d.signedUrl, exp: Date.now() + 50 * 60e3 };
+    }
+    for (const i of imgs) {
+      const s = signed[i.dataset.key];
+      if (s) i.src = s.url; else missing(i, "Não foi possível carregar esta imagem.");
+    }
+  }
+  const canImages = () => (mode === "cloud" && !!sbUser) || (mode === "db" && !!assetsCap);
+  async function shrink(file) {
+    try {
+      const bmp = await createImageBitmap(file);
+      const scale = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale);
+      c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+      const webp = await new Promise((r) => c.toBlob(r, "image/webp", 0.85));
+      if (webp && webp.type === "image/webp" && (webp.size < file.size || scale < 1)) return webp;
+      return file;
+    } catch { return file; }
+  }
+  async function uploadImage(file) {
+    if (!/^image\/(png|jpeg|webp|gif)$/.test(file.type)) return null;
+    const blob = file.type === "image/gif" ? file : await shrink(file);
+    if (blob.size > MAX_IMG) return null;
+    if (mode === "cloud" && sbUser) {
+      const ext = { "image/webp": "webp", "image/jpeg": "jpg", "image/png": "png", "image/gif": "gif" }[blob.type] || "img";
+      const path = `${sbUser.id}/${uid()}.${ext}`;
+      const { error } = await sb.storage.from(BUCKET).upload(path, blob, { contentType: blob.type, upsert: false });
+      if (error) throw error;
+      return "img:" + path;
+    }
+    if (mode === "db" && assetsCap) { const r = await assetsCap.upload(blob); return r.url; }
+    return null;
+  }
+  let upCount = 0;
+  async function insertImages(files, body, id) {
+    if (!canImages()) {
+      toast(IN_ARTIFACT ? "Não dá para guardar imagens nesta visualização." : "Para colar imagens, entre na sincronização em “Backup e sincronização”.");
+      return;
+    }
+    for (const f of files) {
+      const ph = `![Enviando imagem ${++upCount}…]()`;
+      const pos = body.selectionStart, v = body.value;
+      const ins = (pos > 0 && v[pos - 1] !== "\n" ? "\n" : "") + ph + "\n";
+      body.value = v.slice(0, pos) + ins + v.slice(body.selectionEnd);
+      body.selectionStart = body.selectionEnd = pos + ins.length;
+      notes[id].body = body.value; touch(id);
+      let ref = null, failed = false;
+      try { ref = await uploadImage(f); } catch { failed = true; }
+      const n = notes[id]; if (!n) continue;
+      const rep = ref ? `![imagem](${ref})` : "";
+      if (body.isConnected) {
+        const p = body.selectionStart, at = body.value.indexOf(ph);
+        n.body = body.value.replace(ph, rep);
+        body.value = n.body;
+        const np = at >= 0 && at < p ? p + rep.length - ph.length : p;
+        body.selectionStart = body.selectionEnd = Math.max(0, np);
+      } else n.body = n.body.replace(ph, rep);
+      touch(id); renderList();
+      if (failed) toast("Não foi possível enviar a imagem. Confira a conexão e tente de novo.");
+      else if (!ref) toast("Use imagens PNG, JPG, WebP ou GIF de até 5 MB.");
+    }
   }
 
   // ---------- render ----------
@@ -446,8 +750,14 @@ button { cursor: pointer; }
     const q = query.trim().toLowerCase();
     const inTrash = view === "__trash";
     let arr = Object.entries(notes).map(([id, n]) => ({ id, ...n })).filter((n) => !!n.deletedAt === inTrash);
-    if (!inTrash && view) arr = arr.filter((n) => { const ts = noteTags(n); return view === "__none" ? !ts.length : ts.includes(view); });
-    if (q) arr = arr.filter((n) => (n.title + "\n" + n.body + "\n" + n.tags.join(" ")).toLowerCase().includes(q));
+    if (!inTrash && view) {
+      if (view.startsWith("f:")) {
+        const fid = view.slice(2) || null;
+        if (q && fid) { const set = descendants(fid); arr = arr.filter((n) => set.has(folderOf(n))); }
+        else if (!q) arr = arr.filter((n) => folderOf(n) === fid);
+      } else arr = arr.filter((n) => { const ts = noteTags(n); return view === "__none" ? !ts.length : ts.includes(view); });
+    }
+    if (q) arr = arr.filter((n) => (n.title + "\n" + n.body + "\n" + noteTags(n).join(" ")).toLowerCase().includes(q));
     if (inTrash) return arr.sort((a, b) => b.deletedAt - a.deletedAt);
     const by = {
       updated: (a, b) => b.updated - a.updated,
@@ -457,29 +767,58 @@ button { cursor: pointer; }
     return arr.sort((a, b) => (b.pinned - a.pinned) || by(a, b));
   }
 
-  function renderTags() {
-    const live = Object.values(notes).filter((n) => !n.deletedAt);
-    const trashN = Object.values(notes).length - live.length;
-    const counts = {}; let untagged = 0;
-    for (const n of live) { const ts = noteTags(n); if (!ts.length) untagged++; for (const t of ts) counts[t] = (counts[t] || 0) + 1; }
-    const tags = Object.keys(counts).sort((a, b) => a.localeCompare(b, "pt-BR"));
-    $("count-line").textContent = ready ? `${live.length} ${live.length === 1 ? "nota" : "notas"} · ${tags.length} ${tags.length === 1 ? "tag" : "tags"}` : "carregando…";
-    const btn = (key, label, n, lead) => el("button", {
+  function navBtn(key, label, n, lead) {
+    return el("button", {
       class: "tagbtn", "aria-pressed": String(view === key),
       onclick: () => setView(key !== null && view === key ? null : key),
     }, lead, el("span", { class: "name", text: label }), el("span", { class: "n", text: String(n) }));
-    const box = $("taglist");
-    box.replaceChildren(el("div", { class: "tagrow" }, btn(null, "Todas as notas", live.length, null)));
-    for (const t of tags) box.append(el("div", { class: "tagrow" },
-      btn(t, "#" + t, counts[t], dotEl(t)),
+  }
+  function renderNav() {
+    const all = Object.values(notes);
+    const live = all.filter((n) => !n.deletedAt);
+    const counts = {}; let untagged = 0;
+    for (const n of live) { const ts = noteTags(n); if (!ts.length) untagged++; for (const t of ts) counts[t] = (counts[t] || 0) + 1; }
+    for (const f of Object.values(meta.folders)) for (const t of f.tags) if (!counts[t]) counts[t] = 0;
+    const tags = Object.keys(counts).sort((a, b) => a.localeCompare(b, "pt-BR"));
+    const nf = Object.keys(meta.folders).length;
+    $("count-line").textContent = ready
+      ? `${live.length} ${live.length === 1 ? "nota" : "notas"} · ${nf} ${nf === 1 ? "pasta" : "pastas"} · ${tags.length} ${tags.length === 1 ? "tag" : "tags"}`
+      : "carregando…";
+
+    $("mainlist").replaceChildren(el("div", { class: "tagrow" }, navBtn(null, "Todas as notas", live.length, null)));
+
+    // árvore de pastas
+    const direct = {};
+    for (const n of live) { const f = folderOf(n) || ""; direct[f] = (direct[f] || 0) + 1; }
+    const total = (fid) => childrenOf(fid).reduce((s, c) => s + total(c.id), direct[fid] || 0);
+    const fbox = $("folderlist"); fbox.replaceChildren();
+    (function walk(pid, depth) {
+      for (const f of childrenOf(pid)) {
+        const kids = childrenOf(f.id).length, isOpen = prefs.open.includes(f.id);
+        const tw = kids
+          ? el("button", { class: "twisty", "aria-label": (isOpen ? "Recolher " : "Expandir ") + f.name, "aria-expanded": String(isOpen),
+              onclick: () => { prefs.open = isOpen ? prefs.open.filter((x) => x !== f.id) : [...prefs.open, f.id]; savePrefs(); renderNav(); } }, el("span", { text: "▶" }))
+          : el("span", { class: "twisty-sp" });
+        const row = el("div", { class: "tagrow frow", "data-drop": f.id, "data-depth": String(depth), style: `--depth:${depth}` },
+          tw, navBtn("f:" + f.id, f.name, total(f.id), folderIcon(f.id)),
+          el("button", { class: "tagmore", "aria-label": "Editar a pasta " + f.name, title: "Renomear, tags, mover, subpasta", text: "⋯", onclick: () => openFolderEditor(f.id) }));
+        fbox.append(row);
+        if (isOpen) walk(f.id, depth + 1);
+      }
+    })(null, 0);
+    if (nf && direct[""]) fbox.append(el("div", { class: "tagrow frow", "data-drop": "", "data-depth": "0" }, el("span", { class: "twisty-sp" }), navBtn("f:", "Sem pasta", direct[""], null)));
+
+    // tags
+    $("tags-label").hidden = !tags.length;
+    const tbox = $("taglist"); tbox.replaceChildren();
+    for (const t of tags) tbox.append(el("div", { class: "tagrow" },
+      navBtn(t, "#" + t, counts[t], dotEl(t)),
       el("button", { class: "tagmore", "aria-label": "Editar a tag " + t, title: "Renomear, juntar, mudar a cor", text: "⋯", onclick: () => openTagEditor(t) })));
-    if (untagged && tags.length) box.append(el("div", { class: "tagrow" }, btn("__none", "Sem tag", untagged, null)));
-    box.append(el("div", { class: "tagrow trash-row" }, btn("__trash", "Lixeira", trashN, null)));
+    if (untagged && tags.length) tbox.append(el("div", { class: "tagrow" }, navBtn("__none", "Sem tag", untagged, null)));
+    $("trashlist").replaceChildren(el("div", { class: "tagrow trash-row" }, navBtn("__trash", "Lixeira", all.length - live.length, null)));
   }
 
-  function renderList() {
-    const box = $("notes");
-    box.replaceChildren();
+  function renderFilterLine() {
     const fl = $("filter-line");
     const inTrash = view === "__trash";
     if (inTrash) {
@@ -492,25 +831,59 @@ button { cursor: pointer; }
       } });
       fl.hidden = false;
       fl.replaceChildren(el("span", { text: `Notas apagadas somem de vez depois de ${TRASH_DAYS} dias.` }), trash.length ? emptyBtn : null);
+    } else if (view && view.startsWith("f:")) {
+      const fid = view.slice(2) || null;
+      const crumbs = el("div", { class: "crumbs" }, el("button", { class: "link", text: "Todas", onclick: () => setView(null) }));
+      if (fid) chain(fid).forEach((id, i, a) => {
+        crumbs.append(el("span", { text: "›" }));
+        crumbs.append(i === a.length - 1 ? el("span", { class: "cur", text: meta.folders[id].name }) : el("button", { class: "link", text: meta.folders[id].name, onclick: () => setView("f:" + id) }));
+      });
+      else crumbs.append(el("span", { text: "›" }), el("span", { class: "cur", text: "Sem pasta" }));
+      fl.hidden = false;
+      fl.replaceChildren(crumbs, fid ? el("div", { class: "crumb-actions" },
+        el("button", { class: "link", text: "+ Subpasta", onclick: () => newFolder(fid) }),
+        el("button", { class: "link", text: "Editar pasta", onclick: () => openFolderEditor(fid) })) : null);
     } else if (view || query) {
       fl.hidden = false;
       fl.replaceChildren(
         el("span", { text: view ? (view === "__none" ? "Notas sem tag" : "Filtrando por #" + view) : "Resultado da busca" }),
         el("button", { class: "link", text: "Limpar filtro", onclick: () => { view = null; query = ""; $("search").value = ""; renderAll(); } }));
     } else fl.hidden = true;
+  }
 
+  function renderList() {
+    renderFilterLine();
+    const box = $("notes");
+    box.replaceChildren();
+    const inTrash = view === "__trash";
     if (!ready) { box.append(el("div", { class: "empty", text: "Abrindo seu caderno…" })); return; }
     const liveCount = Object.values(notes).filter((n) => !n.deletedAt).length;
-    if (!inTrash && !liveCount && !query) {
+    if (!inTrash && !liveCount && !query && !(view && view.startsWith("f:"))) {
       box.append(el("div", { class: "empty" },
         el("strong", { text: "Seu caderno está vazio" }),
-        el("span", { text: "Crie uma nota e marque com tags como #ideias ou #trabalho, no campo de tags ou no meio do texto. Elas aparecem à esquerda para você filtrar." }),
+        el("span", { text: "Crie uma nota e marque com tags como #ideias ou #trabalho, no campo de tags ou no meio do texto. Organize em pastas e ligue notas com [[Nome da nota]]." }),
         el("button", { class: "btn primary", text: "Escrever a primeira nota", onclick: newNote }),
-        el("button", { class: "btn", text: "Adicionar 3 notas de exemplo", onclick: addSamples })));
+        el("button", { class: "btn", text: "Adicionar notas de exemplo", onclick: addSamples })));
       return;
     }
+    // subpastas no topo da pasta aberta
+    const fid = view && view.startsWith("f:") ? view.slice(2) || null : undefined;
+    if (fid && !query) {
+      const live = Object.values(notes).filter((n) => !n.deletedAt);
+      for (const c of childrenOf(fid)) {
+        const set = descendants(c.id), n = live.filter((x) => set.has(folderOf(x))).length;
+        box.append(el("button", { class: "item folder-item", "data-drop": c.id, onclick: () => { expand(c.id); setView("f:" + c.id); } },
+          folderIcon(c.id), el("span", { class: "t", text: c.name }),
+          ...c.tags.slice(0, 3).map((t) => el("span", { class: "chip" }, dotEl(t), "#" + t)),
+          el("span", { class: "n", text: String(n) })));
+      }
+    }
     const vis = visible();
-    if (!vis.length) { box.append(el("div", { class: "empty", text: inTrash ? "A lixeira está vazia." : "Nenhuma nota encontrada com esse filtro." })); return; }
+    if (!vis.length) {
+      if (!box.children.length) box.append(el("div", { class: "empty", text: inTrash ? "A lixeira está vazia." : fid !== undefined ? "Esta pasta está vazia. Crie uma nota aqui com + Nova ou arraste notas para cá." : "Nenhuma nota encontrada com esse filtro." }));
+      return;
+    }
+    const showPath = fid === undefined || !!query;
     for (const n of vis) {
       const info = el("div", { class: "meta" });
       if (inTrash) {
@@ -518,13 +891,15 @@ button { cursor: pointer; }
         info.append(el("span", { text: `Apagada ${fmt(n.deletedAt)} · some em ${left} ${left === 1 ? "dia" : "dias"}` }));
       } else {
         if (n.pinned) info.append(el("span", { class: "pin", text: "Fixada" }));
-        for (const t of noteTags(n).slice(0, 4)) info.append(el("span", { class: "chip" }, dotEl(t), "#" + t));
+        const f = folderOf(n);
+        if (f && showPath) info.append(el("span", { class: "fpath", title: folderPathName(f) }, folderIcon(f), meta.folders[f].name));
+        for (const t of ownTags(n).slice(0, 4)) info.append(el("span", { class: "chip" }, dotEl(t), "#" + t));
         const p = taskProgress(n.body);
         if (p) info.append(el("span", { class: "prog", title: "Itens marcados", text: "☑ " + p }));
         info.append(el("span", { text: fmt(prefs.sort === "created" ? n.created : n.updated) }));
       }
       const pv = plainPreview(n.body);
-      box.append(el("button", { class: "item", "aria-current": String(n.id === current), onclick: () => open(n.id) },
+      box.append(el("button", { class: "item", "data-id": n.id, draggable: inTrash ? null : "true", "aria-current": String(n.id === current), onclick: () => open(n.id) },
         el("span", { class: "t", text: n.title || "Sem título" }),
         pv ? el("span", { class: "p", text: pv }) : null,
         info));
@@ -558,17 +933,18 @@ button { cursor: pointer; }
       } });
       delWrap.append(delBtn);
       const pv = el("div", { class: "md" }); pv.innerHTML = renderMd(n.body);
-      pv.querySelectorAll("input").forEach((i) => { i.disabled = true; });
+      pv.querySelectorAll("input, .wikilink, .tagref").forEach((i) => { i.disabled = true; });
       sheet.replaceChildren(
         el("div", { class: "sheet-bar" }, back, el("span", { class: "trash-note", text: "Na lixeira" }), el("span", { class: "spacer" }),
           el("button", { class: "ghost on", text: "Restaurar", onclick: () => { n.deletedAt = null; touch(id); view = null; renderAll(); toast("Nota restaurada"); } }),
           delWrap),
         el("div", { class: "sheet-body" }, el("h1", { class: "title-view", text: n.title || "Sem título" }), pv));
+      resolveImages(pv);
       return;
     }
 
     const preview = prefs.preview && editOnce !== id;
-    const changed = () => { touch(id); renderTags(); renderList(); };
+    const changed = () => { touch(id); renderNav(); renderList(); };
 
     const when = el("span", { class: "when", text: "Editada " + fmt(n.updated) });
     const viewBtn = el("button", { class: "ghost", "aria-pressed": String(preview), title: "Alternar edição e visualização (Ctrl+Alt+P)", text: preview ? "Editar" : "Visualizar", onclick: togglePreview });
@@ -581,21 +957,33 @@ button { cursor: pointer; }
     if (preview) title = el("h1", { class: "title-view", text: n.title || "Sem título" });
     else {
       title = el("input", { id: "note-title", class: "title-in", placeholder: "Título", "aria-label": "Título", value: n.title });
+      let before = n.title;
+      title.addEventListener("focus", () => { before = n.title; });
       title.addEventListener("input", () => { n.title = title.value; changed(); });
+      title.addEventListener("blur", () => { relinkTitle(before, n.title, id); before = n.title; });
       title.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); const b = $("note-body"); if (b) b.focus(); } });
     }
 
-    // Tags: as do campo têm ×; as escritas no texto aparecem tracejadas
+    // Pasta da nota
+    const sel = el("select", { id: "note-folder", class: "folder-sel", "aria-label": "Pasta da nota" }, el("option", { value: "", text: "Sem pasta" }));
+    folderOptions(sel);
+    sel.value = folderOf(n) || "";
+    sel.addEventListener("change", () => moveNote(id, sel.value || null));
+    const folderPick = el("label", { class: "folder-pick", for: "note-folder" }, folderIcon(folderOf(n)), sel);
+
+    // Tags: as do campo têm ×; as escritas no texto aparecem tracejadas; as herdadas da pasta, com borda fina
     const tagBox = el("div", { class: "tag-edit" });
     const tagIn = el("input", { id: "note-tag", class: "tag-in", placeholder: "+ tag (Enter)", "aria-label": "Adicionar tag", list: "tag-suggest" });
     const dl = el("datalist", { id: "tag-suggest" });
     for (const t of allTags()) dl.append(el("option", { value: t }));
     function drawTags() {
       const inline = bodyTags(n.body).filter((t, i, a) => a.indexOf(t) === i && !n.tags.includes(t));
+      const fromFolder = folderTags(folderOf(n)).filter((t) => !n.tags.includes(t) && !inline.includes(t));
       tagBox.replaceChildren(
         ...n.tags.map((t) => el("span", { class: "chip" }, dotEl(t), "#" + t,
           el("button", { "aria-label": "Remover tag " + t, text: "×", onclick: () => { n.tags = n.tags.filter((x) => x !== t); drawTags(); changed(); } }))),
         ...inline.map((t) => el("span", { class: "chip inline", title: "Tag escrita no texto da nota" }, dotEl(t), "#" + t)),
+        ...fromFolder.map((t) => el("span", { class: "chip inherit", title: "Tag herdada da pasta" }, dotEl(t), "#" + t)),
         tagIn, dl);
     }
     function addTag() {
@@ -628,25 +1016,87 @@ button { cursor: pointer; }
       });
       content.addEventListener("click", (e) => {
         const t = e.target.closest(".tagref");
-        if (t) { app.classList.remove("editing", "focus"); setView(t.dataset.tag); }
+        if (t) { app.classList.remove("editing", "focus"); setView(t.dataset.tag); return; }
+        const w = e.target.closest(".wikilink");
+        if (w) openLink(w.dataset.title);
       });
-      content.addEventListener("dblclick", (e) => { if (!e.target.closest("a, input, label, .tagref")) togglePreview(); });
+      content.addEventListener("dblclick", (e) => { if (!e.target.closest("a, input, label, button, img")) togglePreview(); });
+      resolveImages(content);
     } else {
-      const body = el("textarea", { id: "note-body", class: "body-in", placeholder: "Escreva aqui…\n\nUse #tag no meio do texto, **negrito**, - listas e [ ] tarefas.", "aria-label": "Texto da nota", spellcheck: "true" });
+      const body = el("textarea", { id: "note-body", class: "body-in", placeholder: "Escreva aqui…\n\nUse #tag no meio do texto, [[Outra nota]] para ligar notas, **negrito**, - listas e [ ] tarefas. Cole um print com Ctrl+V.", "aria-label": "Texto da nota", spellcheck: "true" });
       body.value = n.body;
-      body.addEventListener("input", () => { n.body = body.value; when.textContent = "Editada agora"; drawTags(); changed(); });
-      content = el("div", { style: "display:flex;flex-direction:column;gap:8px;flex:1" }, body,
-        el("div", { class: "md-help", text: "**negrito**  *itálico*  # título  - lista  [ ] tarefa  [texto](https://link)  #tag" }));
+      const ac = el("div", { class: "ac", role: "listbox", "aria-label": "Ligar a uma nota" }); ac.hidden = true;
+      let acItems = [], acIdx = 0;
+      const hideAc = () => { ac.hidden = true; acItems = []; };
+      function drawAc() {
+        ac.replaceChildren(el("div", { class: "ac-title", text: "Ligar a uma nota" }),
+          ...acItems.map((it, i) => el("button", { type: "button", role: "option", "aria-selected": String(i === acIdx),
+            onmousedown: (e) => { e.preventDefault(); pickAc(it.title); } }, it.label)));
+      }
+      function updateAc() {
+        const m = body.value.slice(0, body.selectionStart).match(/\[\[([^\[\]\n|]*)$/);
+        if (!m) { hideAc(); return; }
+        const q = m[1].trim().toLowerCase();
+        const titles = [...new Set(Object.entries(notes).filter(([oid, o]) => oid !== id && !o.deletedAt && o.title.trim()).map(([, o]) => o.title.trim()))];
+        acItems = titles.filter((t) => t.toLowerCase().includes(q))
+          .sort((a, b) => (a.toLowerCase().startsWith(q) ? 0 : 1) - (b.toLowerCase().startsWith(q) ? 0 : 1) || a.localeCompare(b, "pt-BR"))
+          .slice(0, 6).map((t) => ({ title: t, label: t }));
+        if (q && !titles.some((t) => t.toLowerCase() === q)) acItems.push({ title: m[1].trim(), label: `Criar “${m[1].trim()}”` });
+        if (!acItems.length) { hideAc(); return; }
+        acIdx = 0; ac.hidden = false; drawAc();
+      }
+      function pickAc(t) {
+        const pos = body.selectionStart;
+        const before = body.value.slice(0, pos).replace(/\[\[([^\[\]\n|]*)$/, "[[" + t + "]]");
+        const after = body.value.slice(pos).replace(/^[^\[\]\n|]*\]\]/, "");
+        body.value = before + after;
+        body.selectionStart = body.selectionEnd = before.length;
+        n.body = body.value; hideAc(); drawTags(); changed();
+      }
+      body.addEventListener("input", () => { n.body = body.value; when.textContent = "Editada agora"; drawTags(); changed(); updateAc(); });
+      body.addEventListener("click", updateAc);
+      body.addEventListener("blur", () => setTimeout(hideAc, 120));
+      body.addEventListener("keydown", (e) => {
+        if (ac.hidden) return;
+        if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); acIdx = (acIdx + (e.key === "ArrowDown" ? 1 : -1) + acItems.length) % acItems.length; drawAc(); }
+        else if (e.key === "Enter" || e.key === "Tab") { e.preventDefault(); pickAc(acItems[acIdx].title); }
+        else if (e.key === "Escape") { e.preventDefault(); hideAc(); }
+      });
+      body.addEventListener("paste", (e) => {
+        const files = [...((e.clipboardData && e.clipboardData.files) || [])].filter((f) => f.type.startsWith("image/"));
+        if (files.length) { e.preventDefault(); insertImages(files, body, id); }
+      });
+      body.addEventListener("dragover", (e) => { if ([...e.dataTransfer.types].includes("Files")) { e.preventDefault(); body.classList.add("dragging"); } });
+      body.addEventListener("dragleave", () => body.classList.remove("dragging"));
+      body.addEventListener("drop", (e) => {
+        body.classList.remove("dragging");
+        const files = [...e.dataTransfer.files].filter((f) => f.type.startsWith("image/"));
+        if (files.length) { e.preventDefault(); insertImages(files, body, id); }
+      });
+      const imgBtn = el("button", { class: "link", type: "button", text: "+ Imagem", title: "Também dá para colar (Ctrl+V) ou arrastar uma imagem para o texto",
+        onclick: () => { const fi = $("img-file"); fi.onchange = () => { const fs = [...fi.files]; fi.value = ""; if (fs.length) insertImages(fs, body, id); }; fi.click(); } });
+      content = el("div", { class: "editor" }, body, ac,
+        el("div", { class: "help-row" },
+          el("div", { class: "md-help", text: "**negrito**  # título  - lista  [ ] tarefa  [[nota]]  #tag" }),
+          imgBtn));
     }
+
+    // Quem aponta para esta nota
+    const bl = backlinksOf(id);
+    const blBox = bl.length ? el("section", { class: "backlinks" },
+      el("div", { class: "label", text: `Mencionada em ${bl.length} ${bl.length === 1 ? "nota" : "notas"}` }),
+      el("ul", {}, ...bl.map((b) => el("li", {},
+        el("button", { text: b.title, onclick: () => open(b.id) }),
+        b.ctx ? el("span", { class: "ctx", text: b.ctx }) : null)))) : null;
 
     sheet.replaceChildren(
       el("div", { class: "sheet-bar" }, back, when, el("span", { class: "spacer" }), viewBtn, pinBtn, focusBtn, delBtn),
-      el("div", { class: "sheet-body" }, title, tagBox, content));
+      el("div", { class: "sheet-body" }, title, el("div", { class: "note-meta-row" }, folderPick, tagBox), content, blBox));
   }
 
-  function renderAll() { renderTags(); renderList(); renderSheet(); }
+  function renderAll() { renderNav(); renderList(); renderSheet(); }
   function sheetBusy() { const a = document.activeElement; return !!(a && a.closest && a.closest("#sheet") && /^(INPUT|TEXTAREA)$/.test(a.tagName)); }
-  function refresh() { renderTags(); renderList(); if (!sheetBusy()) renderSheet(); }
+  function refresh() { renderNav(); renderList(); if (!sheetBusy()) renderSheet(); }
 
   // ---------- ações ----------
   function setView(v) { view = v; renderAll(); }
@@ -654,18 +1104,19 @@ button { cursor: pointer; }
   function newNote() {
     if (view === "__trash") view = null;
     const id = uid(), now = Date.now();
-    const tags = view && view !== "__none" ? [view] : [];
-    notes[id] = { title: "", body: "", tags, pinned: false, created: now, updated: now, deletedAt: null };
+    const inFolder = view && view.startsWith("f:") ? view.slice(2) || null : null;
+    const tags = view && view !== "__none" && !view.startsWith("f:") ? [view] : [];
+    notes[id] = { title: "", body: "", tags, pinned: false, created: now, updated: now, deletedAt: null, folderId: inFolder };
     editOnce = id;
     persist(id);
-    open(id); renderTags();
+    open(id); renderNav();
     setTimeout(() => { const t = $("note-title"); if (t) t.focus(); }, 0);
   }
   function trashNote(id) {
     notes[id].deletedAt = Date.now(); touch(id);
     current = null; $("app").classList.remove("editing", "focus");
     renderAll();
-    toast("Nota movida para a lixeira", "Desfazer", () => { if (notes[id]) { notes[id].deletedAt = null; touch(id); open(id); renderTags(); } });
+    toast("Nota movida para a lixeira", "Desfazer", () => { if (notes[id]) { notes[id].deletedAt = null; touch(id); open(id); renderNav(); } });
   }
   function togglePreview() {
     const n = current && notes[current];
@@ -682,16 +1133,21 @@ button { cursor: pointer; }
   }
   function addSamples() {
     const now = Date.now();
+    const pessoal = ensureFolderPath("Exemplo: Pessoal");
+    const leituras = ensureFolderPath("Exemplo: Pessoal/Leituras");
+    meta.folders[leituras].tags = ["leituras"];
     const samples = [
-      { title: "Exemplo: fim de semana", pinned: true, tags: ["exemplo"],
-        body: "Coisas para fazer #pessoal\n\n[x] Comprar pão de queijo\n[ ] Ir à feira de domingo\n[ ] Terminar o **livro** que comecei\n\n> Dica: clique em Visualizar para marcar as caixas." },
-      { title: "Exemplo: reunião de segunda", tags: ["exemplo", "trabalho"],
+      { title: "Exemplo: fim de semana", pinned: true, tags: ["exemplo"], folderId: pessoal,
+        body: "Coisas para fazer #pessoal\n\n[x] Comprar pão de queijo\n[ ] Ir à feira de domingo\n[ ] Terminar o **livro** que comecei (veja [[Exemplo: livros para ler]])\n\n> Dica: clique em Visualizar para marcar as caixas e abrir os links." },
+      { title: "Exemplo: reunião de segunda", tags: ["exemplo", "trabalho"], folderId: null,
         body: "## Pauta\n- revisar o cronograma\n- dividir as tarefas da semana\n\n## Pendências\n[ ] mandar o resumo para a equipe\n[ ] marcar a próxima conversa\n\nLink útil: https://calendar.google.com" },
-      { title: "Exemplo: livros para ler", tags: ["exemplo"],
-        body: "Lista de leitura #leituras\n\n1. *Torto Arado*, Itamar Vieira Junior\n2. *O Avesso da Pele*, Jeferson Tenório\n3. *Cem Anos de Solidão*, García Márquez" },
+      { title: "Exemplo: livros para ler", tags: ["exemplo"], folderId: leituras,
+        body: "Esta nota está na subpasta Leituras, que tem a tag #leituras.\n\n1. *Torto Arado*, Itamar Vieira Junior\n2. *O Avesso da Pele*, Jeferson Tenório\n3. *Cem Anos de Solidão*, García Márquez" },
     ];
     const ids = samples.map((s, i) => { const id = uid() + i; notes[id] = sanitize({ ...s, created: now - i * 60000, updated: now - i * 60000 }); return id; });
-    persist(ids);
+    expand(leituras);
+    meta.updated = Date.now();
+    persist([...ids, "__meta"]);
     renderAll();
   }
 
@@ -706,10 +1162,10 @@ button { cursor: pointer; }
       if (b !== n.body) { n.body = b; ch = true; }
       if (ch) { n.updated = Date.now(); ids.push(id); }
     }
-    if (meta.colors[old] != null) {
-      if (meta.colors[nw] == null) meta.colors[nw] = meta.colors[old];
-      delete meta.colors[old]; meta.updated = Date.now(); ids.push("__meta");
-    }
+    let metaCh = false;
+    for (const f of Object.values(meta.folders)) if (f.tags.includes(old)) { f.tags = [...new Set(f.tags.map((t) => (t === old ? nw : t)))]; metaCh = true; }
+    if (meta.colors[old] != null) { if (meta.colors[nw] == null) meta.colors[nw] = meta.colors[old]; delete meta.colors[old]; metaCh = true; }
+    if (metaCh) { meta.updated = Date.now(); ids.push("__meta"); }
     if (view === old) view = nw;
     persist(ids); renderAll();
     const c = ids.filter((i) => i !== "__meta").length;
@@ -724,20 +1180,27 @@ button { cursor: pointer; }
       if (b !== n.body) { n.body = b; ch = true; }
       if (ch) { n.updated = Date.now(); ids.push(id); }
     }
+    let metaCh = false;
+    for (const f of Object.values(meta.folders)) if (f.tags.includes(tag)) { f.tags = f.tags.filter((t) => t !== tag); metaCh = true; }
+    if (metaCh) { meta.updated = Date.now(); ids.push("__meta"); }
     if (view === tag) view = null;
     persist(ids); renderAll();
-    toast(`Tag #${tag} removida de ${ids.length} ${ids.length === 1 ? "nota" : "notas"}`);
+    const c = ids.filter((i) => i !== "__meta").length;
+    toast(`Tag #${tag} removida de ${c} ${c === 1 ? "nota" : "notas"}`);
   }
-  function closeOverlay() { $("overlay").hidden = true; $("overlay").replaceChildren(); }
+  function showOverlay(panel, onClose) { const ov = $("overlay"); ov.replaceChildren(panel); ov.hidden = false; onOverlayClose = onClose || null; }
+  function closeOverlay() {
+    if (onOverlayClose) { const f = onOverlayClose; onOverlayClose = null; f(); }
+    $("overlay").hidden = true; $("overlay").replaceChildren();
+  }
   function openTagEditor(tag) {
-    const ov = $("overlay");
     const name = el("input", { id: "tag-rename", class: "field", value: tag, "aria-label": "Novo nome da tag" });
     const hint = el("p", { class: "hint" });
     const save = el("button", { class: "btn primary", text: "Renomear" });
     const target = () => { const v = normTag(name.value); return v && v !== tag ? v : null; };
     const upd = () => {
       const v = target(), exists = v && allTags().includes(v);
-      hint.textContent = exists ? `#${v} já existe. Ao salvar, as duas tags viram uma só.` : "Muda o nome em todas as notas, inclusive onde a tag está escrita no texto.";
+      hint.textContent = exists ? `#${v} já existe. Ao salvar, as duas tags viram uma só.` : "Muda o nome em todas as notas e pastas, inclusive onde a tag está escrita no texto.";
       save.textContent = exists ? "Juntar tags" : "Renomear";
     };
     name.addEventListener("input", upd);
@@ -746,7 +1209,7 @@ button { cursor: pointer; }
     upd();
 
     const sw = el("div", { class: "swatches" });
-    const setColor = (h) => { if (h == null) delete meta.colors[tag]; else meta.colors[tag] = h; meta.updated = Date.now(); persist("__meta"); drawSw(); refresh(); };
+    const setColor = (h) => { if (h == null) delete meta.colors[tag]; else meta.colors[tag] = h; saveMeta(); drawSw(); refresh(); };
     const head = el("h2", {}, dotEl(tag), "#" + tag);
     function drawSw() {
       head.firstChild.style.background = tagColor(tag);
@@ -767,16 +1230,97 @@ button { cursor: pointer; }
     } });
     remWrap.append(remBtn);
 
-    ov.replaceChildren(el("div", { class: "panel", role: "dialog", "aria-modal": "true", "aria-label": "Editar tag " + tag },
+    showOverlay(el("div", { class: "panel", role: "dialog", "aria-modal": "true", "aria-label": "Editar tag " + tag },
       head,
       el("section", {}, el("div", { class: "label", text: "Nome" }), el("div", { class: "row" }, name, save), hint),
       el("section", {}, el("div", { class: "label", text: "Cor" }), sw),
       el("section", {}, remWrap),
       el("div", { class: "panel-foot" }, el("button", { class: "btn", text: "Fechar", onclick: closeOverlay }))));
-    ov.hidden = false;
     name.focus(); name.select();
   }
+  function openFolderEditor(fid, isNew) {
+    const f = meta.folders[fid]; if (!f) return;
+    const headName = el("span", { text: f.name });
+    const head = el("h2", {}, folderIcon(fid), headName);
+    const name = el("input", { id: "folder-name", class: "field", value: f.name, "aria-label": "Nome da pasta", maxlength: "80" });
+    const saveName = () => { const v = name.value.trim().slice(0, 80); if (v && v !== f.name) { f.name = v; headName.textContent = v; saveMeta(); refresh(); } };
+    name.addEventListener("keydown", (e) => { if (e.key === "Enter") { saveName(); tagIn.focus(); } });
+    name.addEventListener("blur", saveName);
+
+    const tagBox = el("div", { class: "tag-edit" });
+    const tagIn = el("input", { id: "folder-tag", class: "tag-in", placeholder: "+ tag (Enter)", "aria-label": "Adicionar tag à pasta", list: "folder-tag-suggest" });
+    const dl = el("datalist", { id: "folder-tag-suggest" });
+    for (const t of allTags()) dl.append(el("option", { value: t }));
+    const tagsChanged = () => { saveMeta(); drawTags(); refresh(); head.replaceChild(folderIcon(fid), head.firstChild); };
+    function drawTags() {
+      tagBox.replaceChildren(...f.tags.map((t) => el("span", { class: "chip" }, dotEl(t), "#" + t,
+        el("button", { "aria-label": "Remover tag " + t, text: "×", onclick: () => { f.tags = f.tags.filter((x) => x !== t); tagsChanged(); } }))), tagIn, dl);
+    }
+    function addTag() {
+      const parts = tagIn.value.split(/[,\s]+/).map(normTag).filter(Boolean);
+      let did = false;
+      for (const t of parts) if (!f.tags.includes(t)) { f.tags.push(t); did = true; }
+      tagIn.value = "";
+      if (did) tagsChanged(); else drawTags();
+      tagIn.focus();
+    }
+    tagIn.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addTag(); }
+      else if (e.key === "Backspace" && !tagIn.value && f.tags.length) { f.tags.pop(); tagsChanged(); tagIn.focus(); }
+    });
+    drawTags();
+
+    const parentSel = el("select", { id: "folder-parent", class: "field", "aria-label": "Dentro de qual pasta" }, el("option", { value: "", text: "Nenhuma (pasta principal)" }));
+    folderOptions(parentSel, descendants(fid));
+    parentSel.value = f.parentId || "";
+    parentSel.addEventListener("change", () => { f.parentId = parentSel.value || null; if (f.parentId) expand(f.parentId); saveMeta(); refresh(); });
+
+    const delWrap = el("div");
+    const delBtn = el("button", { class: "btn small", text: "Apagar pasta", onclick: () => {
+      const where = f.parentId ? `“${meta.folders[f.parentId].name}”` : "Sem pasta";
+      delWrap.replaceChildren(el("div", { class: "confirm" },
+        el("span", { text: `As notas e subpastas vão para ${where}.` }),
+        el("button", { class: "btn small danger", text: "Apagar pasta", onclick: () => { onOverlayClose = null; closeOverlay(); deleteFolder(fid); } }),
+        el("button", { class: "btn small", text: "Cancelar", onclick: () => delWrap.replaceChildren(delBtn) })));
+    } });
+    delWrap.append(delBtn);
+
+    showOverlay(el("div", { class: "panel", role: "dialog", "aria-modal": "true", "aria-label": "Editar pasta " + f.name },
+      head,
+      el("section", {}, el("div", { class: "label", text: "Nome" }), name),
+      el("section", {}, el("div", { class: "label", text: "Tags da pasta" }), tagBox,
+        el("p", { class: "hint", text: "As notas desta pasta e das subpastas herdam estas tags. A primeira tag dá a cor do ícone." })),
+      el("section", {}, el("div", { class: "label", text: "Dentro de" }), parentSel),
+      el("section", {}, el("div", { class: "row" }, el("button", { class: "btn small", text: "+ Nova subpasta", onclick: () => { closeOverlay(); newFolder(fid); } })), delWrap),
+      el("div", { class: "panel-foot" }, el("button", { class: "btn", text: "Fechar", onclick: closeOverlay }))), saveName);
+    name.focus(); if (isNew) name.select();
+  }
   $("overlay").addEventListener("click", (e) => { if (e.target === $("overlay")) closeOverlay(); });
+  $("new-folder").addEventListener("click", () => newFolder(view && view.startsWith("f:") ? view.slice(2) || null : null));
+
+  // ---------- arrastar notas para pastas ----------
+  let overEl = null;
+  const clearOver = () => { if (overEl) { overEl.classList.remove("drop-over"); overEl = null; } };
+  document.addEventListener("dragstart", (e) => {
+    const it = e.target.closest && e.target.closest(".item[data-id]");
+    if (it) { e.dataTransfer.setData("text/x-nota", it.dataset.id); e.dataTransfer.effectAllowed = "move"; }
+  });
+  document.addEventListener("dragover", (e) => {
+    if (![...e.dataTransfer.types].includes("text/x-nota")) return;
+    const t = e.target.closest && e.target.closest("[data-drop]");
+    if (!t) { clearOver(); return; }
+    e.preventDefault();
+    if (overEl !== t) { clearOver(); overEl = t; t.classList.add("drop-over"); }
+  });
+  document.addEventListener("drop", (e) => {
+    const t = e.target.closest && e.target.closest("[data-drop]");
+    const nid = e.dataTransfer.getData("text/x-nota");
+    clearOver();
+    if (!t || !nid) return;
+    e.preventDefault();
+    moveNote(nid, t.dataset.drop || null);
+  });
+  document.addEventListener("dragend", clearOver);
 
   // ---------- exportar e importar ----------
   const today = () => new Date().toISOString().slice(0, 10);
@@ -793,15 +1337,16 @@ button { cursor: pointer; }
   }
   function exportJson() {
     const list = Object.entries(notes).map(([id, n]) => ({ id, ...n }));
-    download(`caderno-backup-${today()}.json`, JSON.stringify({ app: "caderno-de-tags", version: 2, exportedAt: new Date().toISOString(), meta, notes: list }, null, 2), "application/json");
+    download(`caderno-backup-${today()}.json`, JSON.stringify({ app: "caderno-de-tags", version: 3, exportedAt: new Date().toISOString(), meta, notes: list }, null, 2), "application/json");
   }
   function exportMd() {
     const iso = (t) => new Date(t).toISOString().slice(0, 10);
-    const list = visibleAllLive();
+    const list = Object.values(notes).filter((n) => !n.deletedAt).sort((a, b) => (b.pinned - a.pinned) || b.updated - a.updated);
     const md = list.map((n) => [
       "<!-- nota -->",
       "# " + (n.title || "Sem título"),
       n.tags.length ? "tags: " + n.tags.map((t) => "#" + t).join(" ") : null,
+      folderOf(n) ? "pasta: " + folderPathName(folderOf(n)) : null,
       `criada: ${iso(n.created)} · editada: ${iso(n.updated)}${n.pinned ? " · fixada" : ""}`,
       "",
       n.body.trim(),
@@ -809,29 +1354,27 @@ button { cursor: pointer; }
     ].filter((l) => l !== null).join("\n")).join("\n");
     download(`caderno-notas-${today()}.md`, md || "Nenhuma nota.\n", "text/markdown");
   }
-  function visibleAllLive() {
-    return Object.values(notes).filter((n) => !n.deletedAt).sort((a, b) => (b.pinned - a.pinned) || b.updated - a.updated);
-  }
   function parseMd(text, fallbackTitle) {
     const chunks = /^<!-- nota -->\s*$/m.test(text) ? text.split(/^<!-- nota -->\s*$/m) : [text];
     const out = [];
     for (const raw of chunks) {
       if (!raw.trim()) continue;
       const lines = raw.replace(/^\s*\n/, "").split("\n");
-      let title = fallbackTitle, tags = [], pinned = false, created = Date.now();
+      let title = fallbackTitle, tags = [], pinned = false, created = Date.now(), folderId = null;
       if (/^#\s+/.test(lines[0] || "")) title = lines.shift().replace(/^#\s+/, "").trim();
-      if (/^tags:/i.test(lines[0] || "")) tags = lines.shift().replace(/^tags:/i, "").split(/[\s,]+/).map(normTag).filter(Boolean);
-      if (/^criada:/i.test(lines[0] || "")) {
-        const l = lines.shift(), m = l.match(/criada:\s*(\d{4}-\d{2}-\d{2})/i);
-        if (m) created = Date.parse(m[1]) || created;
-        pinned = /fixada/.test(l);
+      while (/^(tags|pasta|criada):/i.test(lines[0] || "")) {
+        const l = lines.shift();
+        if (/^tags:/i.test(l)) tags = l.replace(/^tags:/i, "").split(/[\s,]+/).map(normTag).filter(Boolean);
+        else if (/^pasta:/i.test(l)) folderId = ensureFolderPath(l.replace(/^pasta:/i, ""));
+        else { const m = l.match(/criada:\s*(\d{4}-\d{2}-\d{2})/i); if (m) created = Date.parse(m[1]) || created; pinned = /fixada/.test(l); }
       }
-      out.push(sanitize({ title, tags, pinned, created, updated: Date.now(), body: lines.join("\n").trim() }));
+      out.push(sanitize({ title, tags, pinned, created, updated: Date.now(), folderId, body: lines.join("\n").trim() }));
     }
     return out;
   }
   async function importFiles(files) {
     const ids = []; let skipped = 0, bad = 0;
+    const foldersBefore = JSON.stringify(meta.folders);
     for (const f of files) {
       let text;
       try { text = await f.text(); } catch { bad++; continue; }
@@ -840,6 +1383,12 @@ button { cursor: pointer; }
         try { data = JSON.parse(text); } catch { bad++; continue; }
         const list = Array.isArray(data) ? data : Array.isArray(data.notes) ? data.notes : null;
         if (!list) { bad++; continue; }
+        if (data.meta) {
+          const m = sanitizeMeta(data.meta);
+          for (const [t, h] of Object.entries(m.colors)) if (meta.colors[t] == null) meta.colors[t] = h;
+          for (const [fid, fo] of Object.entries(m.folders)) if (!meta.folders[fid]) meta.folders[fid] = fo;
+          if (Object.keys(m.colors).length) ids.push("__meta");
+        }
         for (const item of list) {
           if (!item || typeof item !== "object") continue;
           const id = typeof item.id === "string" && /^[\w.~:@+-]{1,64}$/.test(item.id) && item.id !== "__meta" ? item.id : uid();
@@ -847,16 +1396,13 @@ button { cursor: pointer; }
           if (notes[id] && notes[id].updated >= inc.updated) { skipped++; continue; }
           notes[id] = inc; delete tombs[id]; ids.push(id);
         }
-        if (data.meta) {
-          const m = sanitizeMeta(data.meta);
-          for (const [t, h] of Object.entries(m.colors)) if (meta.colors[t] == null) meta.colors[t] = h;
-          meta.updated = Date.now(); ids.push("__meta");
-        }
       } else {
         for (const n of parseMd(text, f.name.replace(/\.[^.]+$/, ""))) { const id = uid(); notes[id] = n; ids.push(id); }
       }
     }
-    if (ids.length) await persist(ids);
+    if (JSON.stringify(meta.folders) !== foldersBefore && !ids.includes("__meta")) ids.push("__meta");
+    if (ids.includes("__meta")) meta.updated = Date.now();
+    if (ids.length) await persist([...new Set(ids)]);
     renderAll();
     const c = ids.filter((i) => i !== "__meta").length;
     const parts = [`${c} ${c === 1 ? "nota importada" : "notas importadas"}`];
@@ -880,7 +1426,7 @@ button { cursor: pointer; }
     toastT = setTimeout(() => { t.hidden = true; }, 6000);
   }
 
-  // ---------- sincronização (Supabase, só na versão do GitHub) ----------
+  // ---------- sincronização (Supabase, só na versão publicada no site) ----------
   function renderSync() {
     const box = $("sync");
     if (IN_ARTIFACT) { box.hidden = true; return; }
@@ -899,7 +1445,7 @@ button { cursor: pointer; }
       return;
     }
     const email = el("input", { id: "sync-email", class: "field", type: "email", placeholder: "seu@email.com", "aria-label": "E-mail para entrar", autocomplete: "email" });
-    const msg = el("span", { text: "Entre com seu e-mail para ver as mesmas notas no celular e no computador." });
+    const msg = el("span", { text: "Entre com seu e-mail para ver as mesmas notas no celular e no computador, e para colar imagens." });
     const form = el("form", { class: "row" }, email, el("button", { class: "btn small primary", type: "submit", text: "Entrar" }));
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -982,6 +1528,7 @@ button { cursor: pointer; }
   $("sort").value = prefs.sort;
   $("sort").addEventListener("change", (e) => { prefs.sort = e.target.value; savePrefs(); renderList(); });
   document.addEventListener("keydown", (e) => {
+    if (e.defaultPrevented) return;
     if (e.key === "Escape") {
       if (!$("overlay").hidden) { closeOverlay(); return; }
       if ($("app").classList.contains("focus")) { setFocus(false); return; }
@@ -1017,7 +1564,7 @@ button { cursor: pointer; }
     dbCol.onSnapshot((snap) => {
       for (const ch of snap.docChanges()) {
         const id = ch.doc.id;
-        if (id === "__meta") { if (ch.type !== "removed") meta = sanitizeMeta(ch.doc.data()); continue; }
+        if (id === "__meta") { if (ch.type !== "removed" && !writing.__meta) meta = sanitizeMeta(ch.doc.data()); continue; }
         if (ch.type === "removed") { if (!timers[id] && !writing[id]) { delete notes[id]; if (current === id) current = null; } continue; }
         if (timers[id] || writing[id] || ch.doc.metadata.hasPendingWrites) continue;
         const inc = sanitize(ch.doc.data());
@@ -1033,8 +1580,8 @@ button { cursor: pointer; }
   (async () => {
     if (IN_ARTIFACT) {
       try {
-        const [db, user, dl] = await Promise.all([window.claude.use("db"), window.claude.use("user"), window.claude.use("downloads")]);
-        dlCap = dl;
+        const [db, user, dl, assets] = await Promise.all(["db", "user", "downloads", "assets"].map((c) => window.claude.use(c)));
+        dlCap = dl; assetsCap = assets;
         const userId = user ? await user.id() : null;
         if (db && userId) { startDb(db, userId); return; }
       } catch {}
