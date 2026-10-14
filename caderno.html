@@ -148,6 +148,31 @@ button { cursor: pointer; }
 }
 .body-in.dragging { outline: 2px dashed var(--accent); outline-offset: 6px; border-radius: 4px; }
 .thumbs { display: flex; gap: 8px; flex-wrap: wrap; }
+/* Formatação: marca-texto, cor do texto e barra flutuante */
+.md u { text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.md mark.hl { color: inherit; border-radius: 3px; padding: 0 2px; }
+.hl-amarelo, .sw-hl-amarelo { background: rgb(255 214 10 / .38); }
+.hl-rosa, .sw-hl-rosa { background: rgb(255 133 192 / .4); }
+.hl-verde, .sw-hl-verde { background: rgb(52 211 153 / .36); }
+.hl-azul, .sw-hl-azul { background: rgb(96 165 250 / .4); }
+.hl-roxo, .sw-hl-roxo { background: rgb(167 139 250 / .42); }
+.hl-laranja, .sw-hl-laranja { background: rgb(251 146 60 / .42); }
+.tc-amarelo { color: #ffd84d; } .sw-tc-amarelo { background: #ffd84d; }
+.tc-rosa { color: #ff85c0; } .sw-tc-rosa { background: #ff85c0; }
+.tc-verde { color: #5ee0a8; } .sw-tc-verde { background: #5ee0a8; }
+.tc-azul { color: #7cb7ff; } .sw-tc-azul { background: #7cb7ff; }
+.tc-roxo { color: #b9a2ff; } .sw-tc-roxo { background: #b9a2ff; }
+.tc-laranja { color: #ffab66; } .sw-tc-laranja { background: #ffab66; }
+.fmt-bar { position: absolute; z-index: 6; display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 10px 30px rgb(0 0 0 / .45); max-width: 100%; }
+.fb { border: 0; background: none; min-width: 30px; height: 30px; padding: 0 7px; border-radius: 6px; color: var(--fg); font-size: 13px; display: inline-flex; align-items: center; justify-content: center; }
+.fb:hover { background: var(--rule); color: var(--accent); }
+.fb code { font-family: var(--font-note); font-size: 11.5px; }
+.fb-sep { width: 1px; height: 20px; background: var(--line); margin: 0 3px; }
+.fb-a { font-weight: 700; border-bottom: 3px solid var(--accent); line-height: 1.1; }
+.fb-mark { padding: 0 4px; border-radius: 3px; background: rgb(255 214 10 / .45); font-weight: 600; }
+.fmt-pal { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 6px 4px 2px; border-top: 1px solid var(--line); margin-top: 2px; }
+.fmt-pal .swatch { width: 22px; height: 22px; border: 1px solid var(--line); }
+.fmt-pal .pal-title { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-right: 4px; }
 .thumbs img { cursor: pointer; }
 .thumbs img:hover { border-color: var(--accent); }
 .md .nimg[src] { cursor: pointer; }
@@ -336,6 +361,8 @@ button { cursor: pointer; }
   let dbCol = null, dlCap = null, assetsCap = null, sb = null, sbUser = null;
   let onOverlayClose = null;
   let pendingImg = null;                              // imagem a selecionar depois de redesenhar a nota
+  let selHook = null;                                 // mostra a barra de formatação quando a seleção muda
+  document.addEventListener("selectionchange", () => { if (selHook) selHook(); });
   const timers = {}, writing = {};
 
   // ---------- preferências e armazenamento local ----------
@@ -598,6 +625,25 @@ button { cursor: pointer; }
 
   // ---------- markdown ----------
   const TASK_RE = /^\s*(?:[-*+]\s+)?\[( |x|X)\]\s?(.*)$/;
+  const LINE_PREFIX_RE = /^(\s*)(#{1,6}\s+|>\s?|[-*+]\s+\[[ xX]\]\s?|\[[ xX]\]\s?|[-*+]\s+|\d+[.)]\s+)?/;
+  // Cores do marca-texto (==texto== ou ==verde:texto==) e do texto ({{verde:texto}})
+  const COLORS = [["amarelo", "Amarelo"], ["rosa", "Rosa"], ["verde", "Verde"], ["azul", "Azul"], ["roxo", "Roxo"], ["laranja", "Laranja"]];
+  const CNAMES = COLORS.map((c) => c[0]).join("|");
+  const HL_RE = new RegExp(`==(?:(${CNAMES}):)?(.+?)==`, "g");
+  const TC_RE = new RegExp(`\\{\\{(${CNAMES}):(.+?)\\}\\}`, "g");
+  // Posição (em px) de um caractere dentro da caixa de texto, medida com uma cópia invisível
+  function caretXY(ta, pos) {
+    const cs = getComputedStyle(ta), m = document.createElement("div");
+    for (const p of ["boxSizing", "width", "fontFamily", "fontSize", "fontWeight", "lineHeight", "letterSpacing", "wordSpacing", "tabSize",
+      "paddingTop", "paddingRight", "paddingBottom", "paddingLeft", "borderTopWidth", "borderRightWidth", "borderBottomWidth", "borderLeftWidth"]) m.style[p] = cs[p];
+    Object.assign(m.style, { position: "absolute", visibility: "hidden", whiteSpace: "pre-wrap", overflowWrap: "break-word", top: "0", left: "-9999px" });
+    m.textContent = ta.value.slice(0, pos);
+    const s = document.createElement("span"); s.textContent = ta.value.slice(pos, pos + 1) || ".";
+    m.append(s); document.body.append(m);
+    const r = { x: s.offsetLeft, y: s.offsetTop, h: parseFloat(cs.lineHeight) || 20 };
+    m.remove();
+    return r;
+  }
   // Tamanho da imagem no texto alternativo, como no Obsidian: ![imagem|50%](...) ou ![imagem|300](...)
   function splitAlt(alt) {
     const m = String(alt).match(/^(.*?)\s*\|\s*(\d{1,4})(%?)\s*$/);
@@ -647,6 +693,9 @@ button { cursor: pointer; }
       .replace(/(^|[^*\w])\*(?!\s)(.+?)(?<!\s)\*(?!\w)/g, "$1<em>$2</em>")
       .replace(/(^|[^\w])_(?!\s)(.+?)(?<!\s)_(?!\w)/g, "$1<em>$2</em>")
       .replace(/~~(.+?)~~/g, "<del>$1</del>")
+      .replace(/\+\+(.+?)\+\+/g, "<u>$1</u>")
+      .replace(HL_RE, (_, c, t) => `<mark class="hl hl-${c || "amarelo"}">${t}</mark>`)
+      .replace(TC_RE, (_, c, t) => `<span class="tc-${c}">${t}</span>`)
       .replace(TAG_RE, (m, pre, t) => {
         const n = normTag(t);
         if (!n || /^\d+$/.test(n)) return m;
@@ -705,6 +754,7 @@ button { cursor: pointer; }
       .replace(/!\[[^\]]*\]\([^)]*\)/g, "[imagem]")
       .replace(WIKI_RE, (_, t, a) => (a || t).trim())
       .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+      .replace(new RegExp(`==(?:(?:${CNAMES}):)?|\\{\\{(?:${CNAMES}):|\\}\\}|\\+\\+`, "g"), "")
       .replace(/\*\*|__|~~|`/g, "")).join(" · ");
   }
 
@@ -945,6 +995,7 @@ button { cursor: pointer; }
   }
 
   function renderSheet() {
+    selHook = null;
     const sheet = $("sheet");
     const n = current && notes[current];
     const app = $("app");
@@ -1182,11 +1233,186 @@ button { cursor: pointer; }
         const files = [...e.dataTransfer.files].filter((f) => f.type.startsWith("image/"));
         if (files.length) { e.preventDefault(); insertImages(files, body, id); }
       });
+      // ---- Barra de formatação: aparece ao selecionar texto ----
+      const fmt = el("div", { class: "fmt-bar", role: "toolbar", "aria-label": "Formatar texto" }); fmt.hidden = true;
+      const pal = el("div", { class: "fmt-pal" }); pal.hidden = true;
+      const hideFmt = () => { fmt.hidden = true; pal.hidden = true; };
+      function placeFmt() {
+        const c = caretXY(body, body.selectionStart);
+        const y = body.offsetTop + c.y - body.scrollTop;
+        const below = matchMedia("(pointer: coarse)").matches || y - fmt.offsetHeight - 6 < 0;
+        fmt.style.top = (below ? y + c.h + 4 + (body.selectionStart !== body.selectionEnd && below ? c.h : 0) : y - fmt.offsetHeight - 6) + "px";
+        fmt.style.left = Math.max(0, Math.min(body.offsetLeft + c.x - 24, content.clientWidth - fmt.offsetWidth)) + "px";
+      }
+      function checkSel() {
+        if (document.activeElement !== body || body.selectionStart === body.selectionEnd || !ac.hidden) {
+          if (!fmt.contains(document.activeElement)) hideFmt();
+          return;
+        }
+        fmt.hidden = false; placeFmt();
+      }
+      selHook = checkSel;
+      function replaceRange(a, b, text, selA, selB) {
+        body.focus();
+        body.setSelectionRange(a, b);
+        let ok = false;
+        try { ok = document.execCommand("insertText", false, text); } catch {}
+        if (!ok || body.value.slice(a, a + text.length) !== text) { body.setRangeText(text, a, b, "end"); body.dispatchEvent(new Event("input")); }
+        body.setSelectionRange(a + selA, a + selB);
+        checkSel();
+      }
+      function trimSel() {
+        const v = body.value; let a = body.selectionStart, b = body.selectionEnd;
+        while (a < b && /\s/.test(v[a])) a++;
+        while (b > a && /\s/.test(v[b - 1])) b--;
+        return [a, b, v];
+      }
+      function wrap(open, close) {
+        const [a, b, v] = trimSel(), sel = v.slice(a, b);
+        if (a >= open.length && v.slice(a - open.length, a) === open && v.slice(b, b + close.length) === close) { replaceRange(a - open.length, b + close.length, sel, 0, sel.length); return; }
+        if (sel.length >= open.length + close.length && sel.startsWith(open) && sel.endsWith(close)) { const inner = sel.slice(open.length, sel.length - close.length); replaceRange(a, b, inner, 0, inner.length); return; }
+        if (!sel) { replaceRange(a, b, open + close, open.length, open.length); return; }
+        if (sel.includes("\n")) {
+          const out = sel.split("\n").map((l) => (l.trim() ? l.replace(/^(\s*)(.*?)(\s*)$/, (m, s1, mid, s2) => s1 + open + mid + close + s2) : l)).join("\n");
+          replaceRange(a, b, out, 0, out.length); return;
+        }
+        replaceRange(a, b, open + sel + close, open.length, open.length + sel.length);
+      }
+      function colorWrap(kind, color, toggle) {
+        let [a, b, v] = trimSel(), sel = v.slice(a, b), found = false;
+        const close = kind === "hl" ? "==" : "}}";
+        const openRe = kind === "hl" ? new RegExp(`==(?:(?:${CNAMES}):)?$`) : new RegExp(`\\{\\{(?:${CNAMES}):$`);
+        const mo = v.slice(Math.max(0, a - 12), a).match(openRe);
+        if (mo && v.slice(b, b + 2) === close) { a -= mo[0].length; b += 2; found = true; }
+        else {
+          const inner = kind === "hl" ? sel.match(new RegExp(`^==(?:(?:${CNAMES}):)?([\\s\\S]*)==$`)) : sel.match(new RegExp(`^\\{\\{(?:${CNAMES}):([\\s\\S]*)\\}\\}$`));
+          if (inner) { sel = inner[1]; found = true; }
+        }
+        if (found && toggle) color = null;
+        if (!color) { replaceRange(a, b, sel, 0, sel.length); return; }
+        const open = kind === "hl" ? (color === "amarelo" ? "==" : `==${color}:`) : `{{${color}:`;
+        if (!sel) { replaceRange(a, b, open + close, open.length, open.length); return; }
+        const out = sel.includes("\n")
+          ? sel.split("\n").map((l) => (l.trim() ? l.replace(/^(\s*)(.*?)(\s*)$/, (m, s1, mid, s2) => s1 + open + mid + close + s2) : l)).join("\n")
+          : open + sel + close;
+        replaceRange(a, b, out, sel.includes("\n") ? 0 : open.length, sel.includes("\n") ? out.length : open.length + sel.length);
+      }
+      function lineRange() {
+        const v = body.value, s = body.selectionStart, e0 = body.selectionEnd;
+        const a = v.lastIndexOf("\n", s - 1) + 1;
+        let e = v.indexOf("\n", e0 > s && v[e0 - 1] === "\n" ? e0 - 1 : e0);
+        if (e < 0) e = v.length;
+        return [a, e];
+      }
+      function setLines(kind) {
+        const [a, e] = lineRange(), lines = body.value.slice(a, e).split("\n");
+        const has = {
+          h1: (l) => /^\s*#\s/.test(l), h2: (l) => /^\s*##\s/.test(l), h3: (l) => /^\s*###\s/.test(l),
+          ul: (l) => /^\s*[-*+]\s+(?!\[[ xX]\])/.test(l), ol: (l) => /^\s*\d+[.)]\s/.test(l),
+          task: (l) => /^\s*(?:[-*+]\s+)?\[[ xX]\]/.test(l), quote: (l) => /^\s*>/.test(l), p: () => false,
+        }[kind];
+        const filled = lines.filter((l) => l.trim());
+        const all = filled.length && filled.every(has);
+        let k = 0;
+        const out = lines.map((l) => {
+          if (!l.trim()) return l;
+          const ind = l.match(/^\s*/)[0], t = l.replace(LINE_PREFIX_RE, "").trimStart();
+          if (all || kind === "p") return ind + t;
+          k++;
+          return ind + { h1: "# ", h2: "## ", h3: "### ", ul: "- ", ol: k + ". ", task: "[ ] ", quote: "> " }[kind] + t;
+        }).join("\n");
+        replaceRange(a, e, out, 0, out.length);
+      }
+      function codeFmt() {
+        const a = body.selectionStart, b = body.selectionEnd, sel = body.value.slice(a, b);
+        if (!sel.includes("\n")) { wrap("`", "`"); return; }
+        const inner = sel.replace(/\n$/, ""), pre = a > 0 && body.value[a - 1] !== "\n" ? "\n" : "";
+        replaceRange(a, b, pre + "```\n" + inner + "\n```\n", pre.length + 4, pre.length + 4 + inner.length);
+      }
+      function linkFmt() {
+        const a = body.selectionStart, b = body.selectionEnd, sel = body.value.slice(a, b).trim();
+        if (/^https?:\/\/\S+$/.test(sel)) { replaceRange(a, b, `[link](${sel})`, 1, 5); return; }
+        const t = sel || "texto";
+        replaceRange(a, b, `[${t}](https://)`, t.length + 3, t.length + 11);
+      }
+      function clearFmt() {
+        const v = body.value; let a = body.selectionStart, b = body.selectionEnd;
+        if (a === b) return;
+        // inclui as marcas que estão logo antes da seleção, mesmo umas dentro das outras
+        const colorOpen = new RegExp(`(?:==|\\{\\{)(?:${CNAMES}):$`);
+        for (;;) {
+          if (a > 0 && "*_~+=`{".includes(v[a - 1])) { a--; continue; }
+          const mo = v.slice(Math.max(0, a - 12), a).match(colorOpen);
+          if (mo) { a -= mo[0].length; continue; }
+          break;
+        }
+        while (b < v.length && "*_~+=`}".includes(v[b])) b++;
+        const out = v.slice(a, b)
+          .replace(new RegExp(`==(?:(?:${CNAMES}):)?`, "g"), "").replace(new RegExp(`\\{\\{(?:${CNAMES}):`, "g"), "").replace(/\}\}/g, "")
+          .replace(/\*\*|__|~~|\+\+|`/g, "")
+          .replace(/(^|[^\w])[_*](?=\S)|(?<=\S)[_*](?!\w)/g, "$1")
+          .split("\n").map((l) => l.replace(LINE_PREFIX_RE, "")).join("\n");
+        replaceRange(a, b, out, 0, out.length);
+      }
+      function showPal(kind) {
+        if (!pal.hidden && pal.dataset.kind === kind) { pal.hidden = true; placeFmt(); return; }
+        pal.dataset.kind = kind;
+        pal.replaceChildren(el("span", { class: "pal-title", text: kind === "hl" ? "Marca-texto" : "Cor do texto" }),
+          ...COLORS.map(([c, label]) => {
+            const s = el("button", { type: "button", class: "swatch", title: label, "aria-label": label, onmousedown: (e) => e.preventDefault(), onclick: () => { colorWrap(kind, c); pal.hidden = true; placeFmt(); } });
+            s.classList.add(kind === "hl" ? "sw-hl-" + c : "sw-tc-" + c);
+            return s;
+          }),
+          el("button", { type: "button", class: "fb", text: "Sem cor", onmousedown: (e) => e.preventDefault(), onclick: () => { colorWrap(kind, null); pal.hidden = true; placeFmt(); } }));
+        pal.hidden = false; placeFmt();
+      }
+      const fb = (label, title, fn) => el("button", { type: "button", class: "fb", title, "aria-label": title, onmousedown: (e) => e.preventDefault(), onclick: fn }, label);
+      const sep = () => el("span", { class: "fb-sep", "aria-hidden": "true" });
+      fmt.append(
+        fb(el("b", { text: "B" }), "Negrito (Ctrl+B)", () => wrap("**", "**")),
+        fb(el("i", { text: "I" }), "Itálico (Ctrl+I)", () => wrap("_", "_")),
+        fb(el("u", { text: "U" }), "Sublinhado (Ctrl+U)", () => wrap("++", "++")),
+        fb(el("s", { text: "S" }), "Riscado (Ctrl+Shift+X)", () => wrap("~~", "~~")),
+        sep(),
+        fb(el("span", { class: "fb-mark", text: "ab" }), "Marca-texto amarelo (Ctrl+Shift+H)", () => colorWrap("hl", "amarelo", true)),
+        fb("▾", "Cores do marca-texto", () => showPal("hl")),
+        fb(el("span", { class: "fb-a", text: "A" }), "Cor do texto", () => showPal("tc")),
+        sep(),
+        fb(el("code", { text: "</>" }), "Código (Ctrl+E)", codeFmt),
+        fb("Link", "Link (Ctrl+K)", linkFmt),
+        fb("[[ ]]", "Ligar a uma nota", () => wrap("[[", "]]")),
+        sep(),
+        fb("T1", "Título grande", () => setLines("h1")),
+        fb("T2", "Título médio", () => setLines("h2")),
+        fb("T3", "Título pequeno", () => setLines("h3")),
+        fb("¶", "Texto normal (tira título, lista e citação)", () => setLines("p")),
+        sep(),
+        fb("•", "Lista", () => setLines("ul")),
+        fb("1.", "Lista numerada", () => setLines("ol")),
+        fb("☐", "Tarefa", () => setLines("task")),
+        fb("❝", "Citação", () => setLines("quote")),
+        sep(),
+        fb("Tx", "Limpar formatação", clearFmt),
+        pal);
+      body.addEventListener("mouseup", () => setTimeout(checkSel, 0));
+      body.addEventListener("keyup", checkSel);
+      body.addEventListener("blur", () => setTimeout(() => { if (document.activeElement !== body && !fmt.contains(document.activeElement)) hideFmt(); }, 150));
+      body.addEventListener("scroll", () => { if (!fmt.hidden) placeFmt(); });
+      body.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && !fmt.hidden) { e.preventDefault(); hideFmt(); return; }
+        if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+        const k = e.key.toLowerCase();
+        const f = e.shiftKey
+          ? { x: () => wrap("~~", "~~"), h: () => colorWrap("hl", "amarelo", true) }[k]
+          : { b: () => wrap("**", "**"), i: () => wrap("_", "_"), u: () => wrap("++", "++"), k: linkFmt, e: codeFmt }[k];
+        if (f) { e.preventDefault(); f(); }
+      });
+
       const imgBtn = el("button", { class: "link", type: "button", text: "+ Imagem", title: "Também dá para colar (Ctrl+V) ou arrastar uma imagem para o texto",
         onclick: () => { const fi = $("img-file"); fi.onchange = () => { const fs = [...fi.files]; fi.value = ""; if (fs.length) insertImages(fs, body, id); }; fi.click(); } });
-      content = el("div", { class: "editor" }, body, ac, thumbs,
+      content = el("div", { class: "editor" }, body, ac, fmt, thumbs,
         el("div", { class: "help-row" },
-          el("div", { class: "md-help", text: "**negrito**  # título  - lista  [ ] tarefa  [[nota]]  #tag" }),
+          el("div", { class: "md-help", text: "Selecione um texto para formatar · [[nota]] liga notas · #tag" }),
           imgBtn));
     }
 
