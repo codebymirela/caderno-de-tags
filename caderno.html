@@ -927,7 +927,7 @@ button { cursor: pointer; }
   async function initCloud() {
     renderSync();
     try {
-      await loadScript("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js");
+      await loadScript("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js");
       sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey);
       sb.auth.onAuthStateChange((_ev, session) => { setTimeout(() => setCloudUser(session ? session.user : null), 0); });
       const { data } = await sb.auth.getSession();
