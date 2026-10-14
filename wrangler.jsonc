@@ -1,0 +1,9 @@
+// Publicação na Cloudflare (Workers com arquivos estáticos).
+// O nome precisa ser igual ao nome do projeto na Cloudflare.
+{
+  "name": "caderno-de-tags",
+  "compatibility_date": "2025-09-01",
+  "assets": {
+    "directory": "."
+  }
+}

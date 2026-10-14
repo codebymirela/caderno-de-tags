@@ -1,0 +1,11 @@
+# Arquivos do repositório que não vão para o site
+.git
+.claude
+.gitignore
+.assetsignore
+wrangler.jsonc
+node_modules
+README.md
+supabase.sql
+caderno.html
+*.zip
