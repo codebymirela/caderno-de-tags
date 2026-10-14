@@ -1,0 +1,7 @@
+# Pacotes gerados para upload manual
+*.zip
+
+# Arquivos do sistema
+Thumbs.db
+desktop.ini
+.DS_Store

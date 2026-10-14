@@ -1,0 +1,1056 @@
+<title>Caderno de Tags</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: três painéis (tags | lista | folha) que viram uma pilha navegável no celular; modo foco deixa só a folha */
+:root {
+  --bg: #eef0f3;
+  --panel: #f7f8fa;
+  --paper: #ffffff;
+  --fg: #1d2330;
+  --muted: #687185;
+  --line: #d9dde5;
+  --accent: #2f4fd1;
+  --accent-soft: #e3e8fb;
+  --danger: #b4232f;
+  --rule: #e9edf5;
+  --scrim: rgb(20 24 34 / .45);
+  --font-ui: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-note: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12151c; --panel: #171b24; --paper: #1d222d; --fg: #e4e7ee; --muted: #949cb0;
+    --line: #2c3342; --accent: #8ea4ff; --accent-soft: #252e4f; --danger: #ff7b86; --rule: #252b37;
+    --scrim: rgb(0 0 0 / .6);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12151c; --panel: #171b24; --paper: #1d222d; --fg: #e4e7ee; --muted: #949cb0;
+  --line: #2c3342; --accent: #8ea4ff; --accent-soft: #252e4f; --danger: #ff7b86; --rule: #252b37;
+  --scrim: rgb(0 0 0 / .6);
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-ui); font-size: 14px; }
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.app { height: 100%; display: grid; grid-template-columns: 220px 310px 1fr; }
+
+/* Barra de tags */
+.tags { background: var(--panel); border-right: 1px solid var(--line); padding: 18px 12px; display: flex; flex-direction: column; gap: 18px; overflow-y: auto; }
+.brand { font-weight: 700; font-size: 17px; padding-inline: 8px; letter-spacing: -0.01em; }
+.brand small { display: block; font-weight: 400; font-size: 12px; color: var(--muted); margin-top: 2px; }
+.label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); padding-inline: 8px; margin-bottom: 4px; }
+.taglist { display: flex; flex-direction: column; gap: 1px; }
+.tagrow { display: flex; align-items: center; border-radius: 6px; }
+.tagrow:hover { background: var(--rule); }
+.tagrow.trash-row { margin-top: 8px; border-top: 1px solid var(--line); padding-top: 8px; border-radius: 0; }
+.tagbtn { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; border: 0; background: none; padding: 7px 8px; border-radius: 6px; text-align: left; }
+.tagbtn[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.tagbtn .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.tagbtn .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tagbtn .n { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tagmore { border: 0; background: none; color: var(--muted); padding: 4px 8px; border-radius: 6px; font-size: 15px; line-height: 1; }
+.tagmore:hover { color: var(--fg); background: var(--line); }
+@media (hover: hover) {
+  .tagmore { opacity: 0; }
+  .tagrow:hover .tagmore, .tagmore:focus-visible { opacity: 1; }
+}
+.tools summary { cursor: pointer; font-size: 13px; font-weight: 600; padding: 6px 8px; border-radius: 6px; color: var(--muted); }
+.tools summary:hover { color: var(--fg); }
+.tools-body { display: flex; flex-direction: column; gap: 10px; padding: 8px 0 0; }
+.tool-btns { display: flex; flex-wrap: wrap; gap: 6px; padding-inline: 8px; }
+.sync { padding-inline: 8px; display: flex; flex-direction: column; gap: 8px; font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+.sync .row { flex-wrap: wrap; }
+.sync strong { color: var(--fg); font-weight: 600; overflow-wrap: anywhere; }
+.save-state { margin-top: auto; font-size: 12px; color: var(--muted); padding-inline: 8px; line-height: 1.4; }
+
+/* Lista */
+.list { border-right: 1px solid var(--line); display: flex; flex-direction: column; min-width: 0; background: var(--bg); }
+.list-head { padding: 14px 14px 10px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--line); }
+.row { display: flex; gap: 8px; align-items: center; }
+.field { flex: 1; min-width: 0; padding: 8px 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--paper); }
+.sort { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.sort select { border: 1px solid var(--line); background: var(--paper); border-radius: 6px; padding: 4px 6px; font-size: 12.5px; }
+.btn { border: 1px solid var(--line); background: var(--paper); padding: 8px 12px; border-radius: 7px; font-weight: 600; white-space: nowrap; }
+.btn:hover { border-color: var(--muted); }
+.btn.small { padding: 5px 9px; font-size: 12.5px; font-weight: 500; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.danger { background: var(--danger); border-color: var(--danger); color: var(--paper); }
+.filter-line { font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; align-items: center; }
+.filter-line .link { border: 0; background: none; color: var(--accent); padding: 0; font-size: 12px; }
+.notes { overflow-y: auto; flex: 1; }
+.item { width: 100%; text-align: left; border: 0; border-bottom: 1px solid var(--line); background: none; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+.item:hover { background: var(--panel); }
+.item[aria-current="true"] { background: var(--paper); box-shadow: inset 3px 0 0 var(--accent); }
+.item .t { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item .p { color: var(--muted); font-size: 13px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.4; }
+.item .meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip { display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px; border-radius: 99px; font-size: 11px; font-weight: 500; background: var(--rule); color: var(--fg); }
+.chip .dot { width: 6px; height: 6px; border-radius: 50%; flex: none; }
+.pin { color: var(--accent); font-weight: 700; }
+.prog { font-weight: 600; }
+
+.empty { padding: 28px 18px; color: var(--muted); line-height: 1.55; display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+.empty strong { color: var(--fg); font-size: 15px; }
+
+/* Folha */
+.sheet { display: flex; flex-direction: column; min-width: 0; background: var(--paper); }
+.sheet-bar { display: flex; align-items: center; gap: 4px; padding: 10px 18px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.sheet-bar .spacer { flex: 1; }
+.sheet-bar .when { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; margin-right: 6px; }
+.ghost { border: 0; background: none; padding: 6px 9px; border-radius: 6px; color: var(--muted); font-weight: 500; }
+.ghost:hover { background: var(--rule); color: var(--fg); }
+.ghost.on, .ghost[aria-pressed="true"] { color: var(--accent); }
+.ghost.danger:hover { color: var(--danger); }
+.back { display: none; }
+.confirm { display: flex; gap: 6px; align-items: center; font-size: 13px; flex-wrap: wrap; }
+.trash-note { font-size: 12.5px; color: var(--danger); font-weight: 600; }
+
+.sheet-body { flex: 1; overflow-y: auto; padding: 26px clamp(16px, 5vw, 56px) 40px; display: flex; flex-direction: column; gap: 14px; }
+.title-in { border: 0; background: none; font-size: 26px; font-weight: 700; letter-spacing: -0.015em; padding: 0; width: 100%; outline: none; }
+.title-in::placeholder, .body-in::placeholder { color: var(--muted); opacity: .6; }
+.title-view { font-size: 26px; font-weight: 700; letter-spacing: -0.015em; margin: 0; text-wrap: balance; overflow-wrap: anywhere; }
+.tag-edit { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.tag-edit .chip { padding: 3px 4px 3px 9px; font-size: 12px; }
+.tag-edit .chip.inline { padding-right: 9px; background: none; border: 1px dashed var(--line); }
+.tag-edit .chip button { border: 0; background: none; color: var(--muted); padding: 0 4px; line-height: 1; font-size: 14px; }
+.tag-edit .chip button:hover { color: var(--danger); }
+.tag-in { border: 1px dashed var(--line); background: none; border-radius: 99px; padding: 3px 10px; font-size: 12px; min-width: 0; width: 150px; outline: none; }
+.tag-in:focus { border-color: var(--accent); border-style: solid; }
+.body-in {
+  flex: 1; min-height: 50vh; width: 100%; resize: none; border: 0; outline: none; padding: 0;
+  font-family: var(--font-note); font-size: 14px; line-height: 26px;
+  background-image: linear-gradient(to bottom, transparent 25px, var(--rule) 25px);
+  background-size: 100% 26px; background-attachment: local;
+}
+.md-help { font-size: 12px; color: var(--muted); font-family: var(--font-note); }
+.sheet-empty { flex: 1; display: grid; place-items: center; color: var(--muted); padding: 24px; text-align: center; line-height: 1.8; }
+.kbd { font-family: var(--font-note); font-size: 12px; border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; }
+
+/* Markdown renderizado */
+.md { font-size: 15px; line-height: 1.65; max-width: 72ch; overflow-wrap: anywhere; display: flex; flex-direction: column; gap: .7em; }
+.md > * { margin: 0; }
+.md h2 { font-size: 21px; line-height: 1.3; margin-top: .4em; text-wrap: balance; }
+.md h3 { font-size: 18px; line-height: 1.3; margin-top: .3em; }
+.md h4 { font-size: 15.5px; }
+.md ul, .md ol { padding-left: 1.4em; display: flex; flex-direction: column; gap: .2em; }
+.md li { margin-left: calc(var(--ind, 0) * 1.3em); }
+.md li.task { list-style: none; margin-left: calc(var(--ind, 0) * 1.3em - 1.4em); }
+.md li.task label { display: flex; gap: 9px; align-items: flex-start; cursor: pointer; }
+.md li.task input { margin-top: .3em; width: 16px; height: 16px; accent-color: var(--accent); flex: none; }
+.md li.task.done > label > span { color: var(--muted); text-decoration: line-through; }
+.md code { font-family: var(--font-note); font-size: .88em; background: var(--rule); padding: 1px 5px; border-radius: 4px; }
+.md pre { background: var(--rule); padding: 12px 14px; border-radius: 8px; overflow-x: auto; }
+.md pre code { background: none; padding: 0; }
+.md blockquote { border-left: 3px solid var(--line); padding-left: 12px; color: var(--muted); }
+.md a { color: var(--accent); }
+.md hr { border: 0; border-top: 1px solid var(--line); width: 100%; }
+.md .tagref { border: 0; cursor: pointer; font-size: .82em; vertical-align: 1px; }
+.md .tagref:hover { background: var(--accent-soft); }
+.md .muted { color: var(--muted); }
+
+/* Painel sobreposto e aviso */
+.overlay { position: fixed; inset: 0; background: var(--scrim); display: grid; place-items: center; padding: 16px; z-index: 20; }
+.panel { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 20px; width: min(420px, 100%); display: flex; flex-direction: column; gap: 14px; box-shadow: 0 20px 50px rgb(0 0 0 / .25); }
+.panel h2 { margin: 0; font-size: 18px; display: flex; align-items: center; gap: 8px; }
+.panel h2 .dot { width: 10px; height: 10px; border-radius: 50%; }
+.panel .hint { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+.panel section { display: flex; flex-direction: column; gap: 8px; }
+.panel .label { padding: 0; margin: 0; }
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.swatch { width: 26px; height: 26px; border-radius: 50%; border: 2px solid transparent; padding: 0; }
+.swatch[aria-pressed="true"] { border-color: var(--fg); box-shadow: inset 0 0 0 2px var(--paper); }
+.panel-foot { display: flex; justify-content: flex-end; }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); background: var(--fg); color: var(--paper); padding: 10px 14px; border-radius: 9px; display: flex; gap: 14px; align-items: center; font-size: 13.5px; z-index: 30; max-width: calc(100% - 32px); box-shadow: 0 10px 30px rgb(0 0 0 / .25); }
+.toast button { border: 0; background: none; color: inherit; font-weight: 700; text-decoration: underline; padding: 0; }
+
+/* Modo foco */
+.app.focus { grid-template-columns: 1fr; }
+.app.focus .tags, .app.focus .list { display: none; }
+.app.focus .sheet-body > * { width: 100%; max-width: 760px; margin-inline: auto; }
+
+/* Celular: uma coluna por vez */
+@media (max-width: 820px) {
+  .app { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  .tags { border-right: 0; border-bottom: 1px solid var(--line); padding: 12px 16px; gap: 10px; }
+  .tags nav .label, .save-state { display: none; }
+  .brand { padding: 0; }
+  .taglist { flex-direction: row; overflow-x: auto; gap: 6px; padding-bottom: 2px; }
+  .tagrow { flex: none; border: 1px solid var(--line); border-radius: 99px; }
+  .tagrow.trash-row { margin: 0; padding: 0; border-top: 1px solid var(--line); border-radius: 99px; }
+  .tagbtn { padding: 5px 4px 5px 11px; border-radius: 99px; }
+  .tagrow > .tagbtn:only-child { padding-right: 11px; }
+  .tools summary { padding-inline: 0; }
+  .tool-btns, .sync { padding-inline: 0; }
+  .list, .sheet { grid-row: 2; grid-column: 1; min-height: 0; border-right: 0; }
+  .app.editing .list, .app.editing .tags { display: none; }
+  .app.editing { grid-template-rows: 1fr; }
+  .app.editing .sheet { grid-row: 1; }
+  .app:not(.editing) .sheet { display: none; }
+  .back { display: inline-block; }
+  .focus-btn { display: none; }
+  .sheet-bar { padding: 10px 12px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .item, .tagrow, .btn, .ghost { transition: background-color .12s, border-color .12s, color .12s; }
+}
+</style>
+
+<div class="app" id="app">
+  <aside class="tags">
+    <div class="brand">Caderno de Tags<small id="count-line">carregando…</small></div>
+    <nav aria-label="Filtrar notas">
+      <div class="label">Filtrar</div>
+      <div class="taglist" id="taglist"></div>
+    </nav>
+    <details class="tools">
+      <summary>Backup e sincronização</summary>
+      <div class="tools-body">
+        <div class="tool-btns">
+          <button class="btn small" id="exp-json" title="Todas as notas, inclusive a lixeira, para importar depois">Exportar JSON</button>
+          <button class="btn small" id="exp-md" title="Todas as notas em um arquivo .md para ler em qualquer editor">Exportar Markdown</button>
+          <button class="btn small" id="imp-btn" title="Arquivos .json, .md ou .txt">Importar…</button>
+          <input type="file" id="imp-file" accept=".json,.md,.markdown,.txt" multiple hidden>
+        </div>
+        <div class="sync" id="sync"></div>
+      </div>
+    </details>
+    <div class="save-state" id="save-state"></div>
+  </aside>
+
+  <section class="list">
+    <div class="list-head">
+      <div class="row">
+        <input class="field" id="search" type="search" placeholder="Buscar nas notas" aria-label="Buscar nas notas">
+        <button class="btn primary" id="new-btn" title="Nova nota (Ctrl+Alt+N)">+ Nova</button>
+      </div>
+      <label class="sort" for="sort">Ordenar por
+        <select id="sort">
+          <option value="updated">Editadas por último</option>
+          <option value="created">Criadas por último</option>
+          <option value="title">Título (A–Z)</option>
+        </select>
+      </label>
+      <div class="filter-line" id="filter-line" hidden></div>
+    </div>
+    <div class="notes" id="notes"></div>
+  </section>
+
+  <main class="sheet" id="sheet"></main>
+</div>
+<div class="overlay" id="overlay" hidden></div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const CFG = window.CADERNO_CONFIG || {};
+  const IN_ARTIFACT = !!(window.claude && window.claude.use);
+  const HAS_CLOUD = !IN_ARTIFACT && !!(CFG.supabaseUrl && CFG.supabaseAnonKey);
+  const K = { notes: "caderno-tags-notas", meta: "caderno-tags-meta", tombs: "caderno-tags-apagadas", prefs: "caderno-tags-prefs" };
+  const DAY = 864e5, TRASH_DAYS = 30;
+  const HUES = [0, 25, 45, 95, 160, 195, 225, 265, 310];
+
+  let notes = {};                         // id -> nota
+  let meta = { colors: {}, updated: 0 };  // cores escolhidas para as tags
+  let tombs = {};                         // notas apagadas para sempre (para a sincronização não trazê-las de volta)
+  let current = null;                     // nota aberta
+  let view = null;                        // null = todas | tag | "__none" | "__trash"
+  let query = "";
+  let mode = "local";                     // "local" | "db" (claude.ai) | "cloud" (Supabase)
+  let ready = false;
+  let editOnce = null;                    // nota nova abre sempre em edição
+  let dbCol = null, dlCap = null, sb = null, sbUser = null;
+  const timers = {}, writing = {};
+
+  // ---------- preferências e armazenamento local ----------
+  function lsGet(k, fb) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fb; } catch { return fb; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+  const prefs = Object.assign({ sort: "updated", preview: false }, lsGet(K.prefs, {}));
+  const savePrefs = () => lsSet(K.prefs, prefs);
+  function saveLocal() { if (mode === "db") return; lsSet(K.notes, notes); lsSet(K.meta, meta); lsSet(K.tombs, tombs); }
+  function setState(t) { $("save-state").textContent = t; }
+
+  // ---------- gravação ----------
+  async function persist(ids) {
+    ids = [].concat(ids);
+    if (mode === "db") { for (const id of ids) await dbWrite(id); return; }
+    saveLocal();
+    if (mode === "cloud") await cloudPush(ids);
+    else setState("Salvo neste navegador");
+  }
+  async function dbWrite(id) {
+    if (writing[id]) { writing[id].again = true; return; }
+    writing[id] = { again: false };
+    try {
+      do {
+        writing[id].again = false;
+        if (id === "__meta") await dbCol.doc(id).set({ ...meta });
+        else if (notes[id]) await dbCol.doc(id).set({ ...notes[id] });
+        else await dbCol.doc(id).delete();
+      } while (writing[id].again);
+      setState("Tudo salvo na sua conta");
+    } catch (e) {
+      setState(e && e.code === "quota_exceeded" ? "Limite de notas atingido. Esvazie a lixeira para salvar novas." : "Não foi possível salvar. Edite de novo para tentar outra vez.");
+    } finally { delete writing[id]; }
+  }
+  function scheduleSave(id) {
+    setState("Salvando…");
+    clearTimeout(timers[id]);
+    timers[id] = setTimeout(() => { delete timers[id]; persist(id); }, 600);
+  }
+  function touch(id) { notes[id].updated = Date.now(); scheduleSave(id); }
+  function purge(ids) {
+    ids = [].concat(ids);
+    for (const id of ids) {
+      clearTimeout(timers[id]); delete timers[id];
+      delete notes[id];
+      if (mode !== "db") tombs[id] = { purged: true, updated: Date.now() };
+      if (current === id) current = null;
+    }
+    persist(ids);
+  }
+
+  // ---------- utilidades ----------
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const escRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  function normTag(t) { return String(t).trim().replace(/^#/, "").toLowerCase().replace(/\s+/g, "-").replace(/[^\p{L}\p{N}_-]/gu, "").slice(0, 32); }
+  function hashHue(tag) { let h = 0; for (const c of tag) h = (h * 31 + c.charCodeAt(0)) % 360; return h; }
+  function tagColor(tag) { const h = meta.colors[tag] != null ? meta.colors[tag] : hashHue(tag); return `hsl(${h} 62% 52%)`; }
+  function fmt(ts) {
+    const d = new Date(ts), now = new Date();
+    if (d.toDateString() === now.toDateString()) return "hoje, " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: d.getFullYear() === now.getFullYear() ? undefined : "numeric" });
+  }
+  function el(tag, props = {}, ...kids) {
+    const e = document.createElement(tag);
+    for (const [k, v] of Object.entries(props)) {
+      if (v == null) continue;
+      if (k === "class") e.className = v;
+      else if (k === "text") e.textContent = v;
+      else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+      else if (k === "value") e.value = v;
+      else e.setAttribute(k, v);
+    }
+    for (const c of kids) if (c != null) e.append(c);
+    return e;
+  }
+  function dotEl(tag) { const d = el("span", { class: "dot" }); d.style.background = tagColor(tag); return d; }
+  function sanitize(d) {
+    return {
+      title: String(d.title || ""), body: String(d.body || ""),
+      tags: Array.isArray(d.tags) ? [...new Set(d.tags.map(normTag).filter(Boolean))] : [],
+      pinned: !!d.pinned, created: Number(d.created) || Date.now(), updated: Number(d.updated) || Date.now(),
+      deletedAt: Number(d.deletedAt) || null,
+    };
+  }
+  function sanitizeMeta(d) {
+    const colors = {};
+    if (d && d.colors && typeof d.colors === "object") for (const [t, h] of Object.entries(d.colors)) if (Number.isFinite(+h)) colors[normTag(t)] = +h;
+    return { colors, updated: Number(d && d.updated) || 0 };
+  }
+
+  // ---------- tags escritas no texto ----------
+  const TAG_RE = /(^|[\s(\[,;*_>])#([\p{L}\p{N}_][\p{L}\p{N}_-]*)/gu;
+  function bodyTags(body) {
+    const out = []; let code = false;
+    for (const line of body.split("\n")) {
+      if (/^\s*```/.test(line)) { code = !code; continue; }
+      if (code) continue;
+      for (const m of line.replace(/`[^`]*`/g, "").matchAll(TAG_RE)) {
+        const t = normTag(m[2]);
+        if (t && !/^\d+$/.test(t)) out.push(t);
+      }
+    }
+    return out;
+  }
+  const noteTags = (n) => [...new Set([...n.tags, ...bodyTags(n.body)])];
+  const allTags = () => [...new Set(Object.values(notes).filter((n) => !n.deletedAt).flatMap(noteTags))].sort((a, b) => a.localeCompare(b, "pt-BR"));
+
+  // ---------- markdown ----------
+  const TASK_RE = /^\s*(?:[-*+]\s+)?\[( |x|X)\]\s?(.*)$/;
+  function inlineMd(src) {
+    const slots = [];
+    const keep = (h) => "\u0000" + (slots.push(h) - 1) + "\u0000";
+    let s = src.replace(/`([^`]+)`/g, (_, c) => keep("<code>" + esc(c) + "</code>"));
+    s = s.replace(/\[([^\]]+)\]\(((?:https?:\/\/|mailto:)[^\s)]+)\)/g, (_, t, u) => keep(`<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(t)}</a>`));
+    s = s.replace(/\bhttps?:\/\/[^\s<>"'\u0000]+/g, (u) => {
+      const tail = (u.match(/[.,;:!?)\]]+$/) || [""])[0];
+      u = u.slice(0, u.length - tail.length);
+      return keep(`<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(u)}</a>`) + tail;
+    });
+    s = esc(s)
+      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+      .replace(/__(.+?)__/g, "<strong>$1</strong>")
+      .replace(/(^|[^*\w])\*(?!\s)(.+?)(?<!\s)\*(?!\w)/g, "$1<em>$2</em>")
+      .replace(/(^|[^\w])_(?!\s)(.+?)(?<!\s)_(?!\w)/g, "$1<em>$2</em>")
+      .replace(/~~(.+?)~~/g, "<del>$1</del>")
+      .replace(TAG_RE, (m, pre, t) => {
+        const n = normTag(t);
+        if (!n || /^\d+$/.test(n)) return m;
+        return `${pre}<button type="button" class="chip tagref" data-tag="${esc(n)}" title="Ver notas com #${esc(n)}"><span class="dot" style="background:${tagColor(n)}"></span>#${t}</button>`;
+      });
+    return s.replace(/\u0000(\d+)\u0000/g, (_, i) => slots[+i]);
+  }
+  function indentOf(line) { return Math.min(Math.floor(line.match(/^\s*/)[0].replace(/\t/g, "  ").length / 2), 4); }
+  function renderMd(body) {
+    const lines = body.split("\n");
+    let html = "", para = [], list = null;
+    const flushPara = () => { if (para.length) { html += "<p>" + para.map(inlineMd).join("<br>") + "</p>"; para = []; } };
+    const flushList = () => { if (list) { html += `<${list.type}>${list.items.join("")}</${list.type}>`; list = null; } };
+    const openList = (type) => { if (!list || list.type !== type) { flushList(); list = { type, items: [] }; } };
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      let m;
+      if (/^\s*```/.test(line)) {
+        flushPara(); flushList();
+        const buf = []; i++;
+        while (i < lines.length && !/^\s*```/.test(lines[i])) buf.push(lines[i++]);
+        html += "<pre><code>" + esc(buf.join("\n")) + "</code></pre>";
+        continue;
+      }
+      if ((m = line.match(TASK_RE))) {
+        flushPara(); openList("ul");
+        const done = m[1] !== " ";
+        list.items.push(`<li class="task${done ? " done" : ""}" style="--ind:${indentOf(line)}"><label><input type="checkbox" data-line="${i}"${done ? " checked" : ""}><span>${inlineMd(m[2])}</span></label></li>`);
+        continue;
+      }
+      if ((m = line.match(/^(\s*)([-*+]|\d+[.)])\s+(.*)$/))) {
+        flushPara(); openList(/\d/.test(m[2]) ? "ol" : "ul");
+        list.items.push(`<li style="--ind:${indentOf(line)}">${inlineMd(m[3])}</li>`);
+        continue;
+      }
+      flushList();
+      if (!line.trim()) { flushPara(); continue; }
+      if ((m = line.match(/^(#{1,6})\s+(.*)$/))) { flushPara(); const l = Math.min(m[1].length + 1, 4); html += `<h${l}>${inlineMd(m[2])}</h${l}>`; continue; }
+      if (/^\s*([-*_])(\s*\1){2,}\s*$/.test(line)) { flushPara(); html += "<hr>"; continue; }
+      if ((m = line.match(/^\s*>\s?(.*)$/))) { flushPara(); html += `<blockquote>${inlineMd(m[1])}</blockquote>`; continue; }
+      para.push(line);
+    }
+    flushPara(); flushList();
+    return html || '<p class="muted">Nota vazia. Dê dois cliques para escrever.</p>';
+  }
+  function taskProgress(body) {
+    let total = 0, done = 0;
+    for (const l of body.split("\n")) { const m = l.match(TASK_RE); if (m) { total++; if (m[1] !== " ") done++; } }
+    return total ? `${done}/${total}` : "";
+  }
+  function plainPreview(body) {
+    return body.split("\n").filter((l) => l.trim() && !/^\s*```/.test(l)).slice(0, 3).map((l) => l
+      .replace(TASK_RE, (_, x, t) => (x === " " ? "☐ " : "☑ ") + t)
+      .replace(/^\s*(#{1,6}|>|[-*+]|\d+[.)])\s+/, "")
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+      .replace(/\*\*|__|~~|`/g, "")).join(" · ");
+  }
+
+  // ---------- render ----------
+  function visible() {
+    const q = query.trim().toLowerCase();
+    const inTrash = view === "__trash";
+    let arr = Object.entries(notes).map(([id, n]) => ({ id, ...n })).filter((n) => !!n.deletedAt === inTrash);
+    if (!inTrash && view) arr = arr.filter((n) => { const ts = noteTags(n); return view === "__none" ? !ts.length : ts.includes(view); });
+    if (q) arr = arr.filter((n) => (n.title + "\n" + n.body + "\n" + n.tags.join(" ")).toLowerCase().includes(q));
+    if (inTrash) return arr.sort((a, b) => b.deletedAt - a.deletedAt);
+    const by = {
+      updated: (a, b) => b.updated - a.updated,
+      created: (a, b) => b.created - a.created,
+      title: (a, b) => (a.title || "￿").localeCompare(b.title || "￿", "pt-BR", { sensitivity: "base" }),
+    }[prefs.sort] || ((a, b) => b.updated - a.updated);
+    return arr.sort((a, b) => (b.pinned - a.pinned) || by(a, b));
+  }
+
+  function renderTags() {
+    const live = Object.values(notes).filter((n) => !n.deletedAt);
+    const trashN = Object.values(notes).length - live.length;
+    const counts = {}; let untagged = 0;
+    for (const n of live) { const ts = noteTags(n); if (!ts.length) untagged++; for (const t of ts) counts[t] = (counts[t] || 0) + 1; }
+    const tags = Object.keys(counts).sort((a, b) => a.localeCompare(b, "pt-BR"));
+    $("count-line").textContent = ready ? `${live.length} ${live.length === 1 ? "nota" : "notas"} · ${tags.length} ${tags.length === 1 ? "tag" : "tags"}` : "carregando…";
+    const btn = (key, label, n, lead) => el("button", {
+      class: "tagbtn", "aria-pressed": String(view === key),
+      onclick: () => setView(key !== null && view === key ? null : key),
+    }, lead, el("span", { class: "name", text: label }), el("span", { class: "n", text: String(n) }));
+    const box = $("taglist");
+    box.replaceChildren(el("div", { class: "tagrow" }, btn(null, "Todas as notas", live.length, null)));
+    for (const t of tags) box.append(el("div", { class: "tagrow" },
+      btn(t, "#" + t, counts[t], dotEl(t)),
+      el("button", { class: "tagmore", "aria-label": "Editar a tag " + t, title: "Renomear, juntar, mudar a cor", text: "⋯", onclick: () => openTagEditor(t) })));
+    if (untagged && tags.length) box.append(el("div", { class: "tagrow" }, btn("__none", "Sem tag", untagged, null)));
+    box.append(el("div", { class: "tagrow trash-row" }, btn("__trash", "Lixeira", trashN, null)));
+  }
+
+  function renderList() {
+    const box = $("notes");
+    box.replaceChildren();
+    const fl = $("filter-line");
+    const inTrash = view === "__trash";
+    if (inTrash) {
+      const trash = Object.entries(notes).filter(([, n]) => n.deletedAt).map(([id]) => id);
+      const emptyBtn = el("button", { class: "link", text: "Esvaziar lixeira", onclick: () => {
+        fl.replaceChildren(el("span", { class: "confirm" },
+          el("span", { text: `Apagar ${trash.length} ${trash.length === 1 ? "nota" : "notas"} para sempre?` }),
+          el("button", { class: "btn small danger", text: "Apagar tudo", onclick: () => { purge(trash); toast("Lixeira esvaziada"); renderAll(); } }),
+          el("button", { class: "btn small", text: "Cancelar", onclick: renderList })));
+      } });
+      fl.hidden = false;
+      fl.replaceChildren(el("span", { text: `Notas apagadas somem de vez depois de ${TRASH_DAYS} dias.` }), trash.length ? emptyBtn : null);
+    } else if (view || query) {
+      fl.hidden = false;
+      fl.replaceChildren(
+        el("span", { text: view ? (view === "__none" ? "Notas sem tag" : "Filtrando por #" + view) : "Resultado da busca" }),
+        el("button", { class: "link", text: "Limpar filtro", onclick: () => { view = null; query = ""; $("search").value = ""; renderAll(); } }));
+    } else fl.hidden = true;
+
+    if (!ready) { box.append(el("div", { class: "empty", text: "Abrindo seu caderno…" })); return; }
+    const liveCount = Object.values(notes).filter((n) => !n.deletedAt).length;
+    if (!inTrash && !liveCount && !query) {
+      box.append(el("div", { class: "empty" },
+        el("strong", { text: "Seu caderno está vazio" }),
+        el("span", { text: "Crie uma nota e marque com tags como #ideias ou #trabalho, no campo de tags ou no meio do texto. Elas aparecem à esquerda para você filtrar." }),
+        el("button", { class: "btn primary", text: "Escrever a primeira nota", onclick: newNote }),
+        el("button", { class: "btn", text: "Adicionar 3 notas de exemplo", onclick: addSamples })));
+      return;
+    }
+    const vis = visible();
+    if (!vis.length) { box.append(el("div", { class: "empty", text: inTrash ? "A lixeira está vazia." : "Nenhuma nota encontrada com esse filtro." })); return; }
+    for (const n of vis) {
+      const info = el("div", { class: "meta" });
+      if (inTrash) {
+        const left = Math.max(0, TRASH_DAYS - Math.floor((Date.now() - n.deletedAt) / DAY));
+        info.append(el("span", { text: `Apagada ${fmt(n.deletedAt)} · some em ${left} ${left === 1 ? "dia" : "dias"}` }));
+      } else {
+        if (n.pinned) info.append(el("span", { class: "pin", text: "Fixada" }));
+        for (const t of noteTags(n).slice(0, 4)) info.append(el("span", { class: "chip" }, dotEl(t), "#" + t));
+        const p = taskProgress(n.body);
+        if (p) info.append(el("span", { class: "prog", title: "Itens marcados", text: "☑ " + p }));
+        info.append(el("span", { text: fmt(prefs.sort === "created" ? n.created : n.updated) }));
+      }
+      const pv = plainPreview(n.body);
+      box.append(el("button", { class: "item", "aria-current": String(n.id === current), onclick: () => open(n.id) },
+        el("span", { class: "t", text: n.title || "Sem título" }),
+        pv ? el("span", { class: "p", text: pv }) : null,
+        info));
+    }
+  }
+
+  function renderSheet() {
+    const sheet = $("sheet");
+    const n = current && notes[current];
+    const app = $("app");
+    if (!n) {
+      app.classList.remove("focus");
+      sheet.replaceChildren(el("div", { class: "sheet-empty" }, el("div", {},
+        "Escolha uma nota na lista ou crie uma nova.", el("br"),
+        el("span", { class: "kbd", text: "Ctrl+Alt+N" }), " nova nota  ",
+        el("span", { class: "kbd", text: "Ctrl+Alt+P" }), " visualizar  ",
+        el("span", { class: "kbd", text: "Ctrl+Alt+F" }), " modo foco")));
+      return;
+    }
+    const id = current;
+    const back = el("button", { class: "ghost back", text: "‹ Notas", onclick: () => { app.classList.remove("editing"); } });
+
+    // Nota na lixeira: só leitura
+    if (n.deletedAt) {
+      const delWrap = el("span");
+      const delBtn = el("button", { class: "ghost danger", text: "Apagar para sempre", onclick: () => {
+        delWrap.replaceChildren(el("span", { class: "confirm" },
+          el("span", { text: "Não dá para desfazer." }),
+          el("button", { class: "btn small danger", text: "Apagar", onclick: () => { purge(id); app.classList.remove("editing"); renderAll(); } }),
+          el("button", { class: "btn small", text: "Cancelar", onclick: () => delWrap.replaceChildren(delBtn) })));
+      } });
+      delWrap.append(delBtn);
+      const pv = el("div", { class: "md" }); pv.innerHTML = renderMd(n.body);
+      pv.querySelectorAll("input").forEach((i) => { i.disabled = true; });
+      sheet.replaceChildren(
+        el("div", { class: "sheet-bar" }, back, el("span", { class: "trash-note", text: "Na lixeira" }), el("span", { class: "spacer" }),
+          el("button", { class: "ghost on", text: "Restaurar", onclick: () => { n.deletedAt = null; touch(id); view = null; renderAll(); toast("Nota restaurada"); } }),
+          delWrap),
+        el("div", { class: "sheet-body" }, el("h1", { class: "title-view", text: n.title || "Sem título" }), pv));
+      return;
+    }
+
+    const preview = prefs.preview && editOnce !== id;
+    const changed = () => { touch(id); renderTags(); renderList(); };
+
+    const when = el("span", { class: "when", text: "Editada " + fmt(n.updated) });
+    const viewBtn = el("button", { class: "ghost", "aria-pressed": String(preview), title: "Alternar edição e visualização (Ctrl+Alt+P)", text: preview ? "Editar" : "Visualizar", onclick: togglePreview });
+    const pinBtn = el("button", { class: "ghost" + (n.pinned ? " on" : ""), text: n.pinned ? "Fixada" : "Fixar", title: "Manter no topo da lista", onclick: () => { n.pinned = !n.pinned; changed(); renderSheet(); } });
+    const isFocus = app.classList.contains("focus");
+    const focusBtn = el("button", { class: "ghost focus-btn", "aria-pressed": String(isFocus), title: "Esconder as colunas (Ctrl+Alt+F, Esc para sair)", text: isFocus ? "Sair do foco" : "Foco", onclick: () => setFocus(!isFocus) });
+    const delBtn = el("button", { class: "ghost danger", text: "Apagar", title: "Mover para a lixeira", onclick: () => trashNote(id) });
+
+    let title;
+    if (preview) title = el("h1", { class: "title-view", text: n.title || "Sem título" });
+    else {
+      title = el("input", { id: "note-title", class: "title-in", placeholder: "Título", "aria-label": "Título", value: n.title });
+      title.addEventListener("input", () => { n.title = title.value; changed(); });
+      title.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); const b = $("note-body"); if (b) b.focus(); } });
+    }
+
+    // Tags: as do campo têm ×; as escritas no texto aparecem tracejadas
+    const tagBox = el("div", { class: "tag-edit" });
+    const tagIn = el("input", { id: "note-tag", class: "tag-in", placeholder: "+ tag (Enter)", "aria-label": "Adicionar tag", list: "tag-suggest" });
+    const dl = el("datalist", { id: "tag-suggest" });
+    for (const t of allTags()) dl.append(el("option", { value: t }));
+    function drawTags() {
+      const inline = bodyTags(n.body).filter((t, i, a) => a.indexOf(t) === i && !n.tags.includes(t));
+      tagBox.replaceChildren(
+        ...n.tags.map((t) => el("span", { class: "chip" }, dotEl(t), "#" + t,
+          el("button", { "aria-label": "Remover tag " + t, text: "×", onclick: () => { n.tags = n.tags.filter((x) => x !== t); drawTags(); changed(); } }))),
+        ...inline.map((t) => el("span", { class: "chip inline", title: "Tag escrita no texto da nota" }, dotEl(t), "#" + t)),
+        tagIn, dl);
+    }
+    function addTag() {
+      const parts = tagIn.value.split(/[,\s]+/).map(normTag).filter(Boolean);
+      let did = false;
+      for (const t of parts) if (!n.tags.includes(t)) { n.tags.push(t); did = true; }
+      tagIn.value = "";
+      drawTags(); tagIn.focus();
+      if (did) changed();
+    }
+    tagIn.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addTag(); }
+      else if (e.key === "Backspace" && !tagIn.value && n.tags.length) { n.tags.pop(); drawTags(); tagIn.focus(); changed(); }
+    });
+    tagIn.addEventListener("blur", () => { if (tagIn.value.trim()) addTag(); });
+    drawTags();
+
+    let content;
+    if (preview) {
+      content = el("div", { class: "md", id: "note-preview", title: "Dois cliques para editar" });
+      content.innerHTML = renderMd(n.body);
+      content.addEventListener("change", (e) => {
+        const cb = e.target.closest("input[type=checkbox]");
+        if (!cb) return;
+        const lines = n.body.split("\n"), i = +cb.dataset.line;
+        lines[i] = lines[i].replace(/\[( |x|X)\]/, cb.checked ? "[x]" : "[ ]");
+        n.body = lines.join("\n");
+        cb.closest("li").classList.toggle("done", cb.checked);
+        changed();
+      });
+      content.addEventListener("click", (e) => {
+        const t = e.target.closest(".tagref");
+        if (t) { app.classList.remove("editing", "focus"); setView(t.dataset.tag); }
+      });
+      content.addEventListener("dblclick", (e) => { if (!e.target.closest("a, input, label, .tagref")) togglePreview(); });
+    } else {
+      const body = el("textarea", { id: "note-body", class: "body-in", placeholder: "Escreva aqui…\n\nUse #tag no meio do texto, **negrito**, - listas e [ ] tarefas.", "aria-label": "Texto da nota", spellcheck: "true" });
+      body.value = n.body;
+      body.addEventListener("input", () => { n.body = body.value; when.textContent = "Editada agora"; drawTags(); changed(); });
+      content = el("div", { style: "display:flex;flex-direction:column;gap:8px;flex:1" }, body,
+        el("div", { class: "md-help", text: "**negrito**  *itálico*  # título  - lista  [ ] tarefa  [texto](https://link)  #tag" }));
+    }
+
+    sheet.replaceChildren(
+      el("div", { class: "sheet-bar" }, back, when, el("span", { class: "spacer" }), viewBtn, pinBtn, focusBtn, delBtn),
+      el("div", { class: "sheet-body" }, title, tagBox, content));
+  }
+
+  function renderAll() { renderTags(); renderList(); renderSheet(); }
+  function sheetBusy() { const a = document.activeElement; return !!(a && a.closest && a.closest("#sheet") && /^(INPUT|TEXTAREA)$/.test(a.tagName)); }
+  function refresh() { renderTags(); renderList(); if (!sheetBusy()) renderSheet(); }
+
+  // ---------- ações ----------
+  function setView(v) { view = v; renderAll(); }
+  function open(id) { current = id; $("app").classList.add("editing"); renderList(); renderSheet(); }
+  function newNote() {
+    if (view === "__trash") view = null;
+    const id = uid(), now = Date.now();
+    const tags = view && view !== "__none" ? [view] : [];
+    notes[id] = { title: "", body: "", tags, pinned: false, created: now, updated: now, deletedAt: null };
+    editOnce = id;
+    persist(id);
+    open(id); renderTags();
+    setTimeout(() => { const t = $("note-title"); if (t) t.focus(); }, 0);
+  }
+  function trashNote(id) {
+    notes[id].deletedAt = Date.now(); touch(id);
+    current = null; $("app").classList.remove("editing", "focus");
+    renderAll();
+    toast("Nota movida para a lixeira", "Desfazer", () => { if (notes[id]) { notes[id].deletedAt = null; touch(id); open(id); renderTags(); } });
+  }
+  function togglePreview() {
+    const n = current && notes[current];
+    if (!n || n.deletedAt) return;
+    if (editOnce === current) { editOnce = null; prefs.preview = true; }
+    else prefs.preview = !prefs.preview;
+    savePrefs(); renderSheet();
+    if (!prefs.preview) setTimeout(() => { const b = $("note-body"); if (b) b.focus(); }, 0);
+  }
+  function setFocus(on) {
+    if (on && !(current && notes[current])) return;
+    $("app").classList.toggle("focus", on);
+    renderSheet();
+  }
+  function addSamples() {
+    const now = Date.now();
+    const samples = [
+      { title: "Exemplo: fim de semana", pinned: true, tags: ["exemplo"],
+        body: "Coisas para fazer #pessoal\n\n[x] Comprar pão de queijo\n[ ] Ir à feira de domingo\n[ ] Terminar o **livro** que comecei\n\n> Dica: clique em Visualizar para marcar as caixas." },
+      { title: "Exemplo: reunião de segunda", tags: ["exemplo", "trabalho"],
+        body: "## Pauta\n- revisar o cronograma\n- dividir as tarefas da semana\n\n## Pendências\n[ ] mandar o resumo para a equipe\n[ ] marcar a próxima conversa\n\nLink útil: https://calendar.google.com" },
+      { title: "Exemplo: livros para ler", tags: ["exemplo"],
+        body: "Lista de leitura #leituras\n\n1. *Torto Arado*, Itamar Vieira Junior\n2. *O Avesso da Pele*, Jeferson Tenório\n3. *Cem Anos de Solidão*, García Márquez" },
+    ];
+    const ids = samples.map((s, i) => { const id = uid() + i; notes[id] = sanitize({ ...s, created: now - i * 60000, updated: now - i * 60000 }); return id; });
+    persist(ids);
+    renderAll();
+  }
+
+  // ---------- editar tags: renomear, juntar, cor ----------
+  function tagRegex(tag) { return new RegExp(`(^|[\\s(\\[,;*_>])#${escRe(tag)}(?![\\p{L}\\p{N}_-])`, "giu"); }
+  function renameTag(old, nw) {
+    const re = tagRegex(old), ids = [];
+    for (const [id, n] of Object.entries(notes)) {
+      let ch = false;
+      if (n.tags.includes(old)) { n.tags = [...new Set(n.tags.map((t) => (t === old ? nw : t)))]; ch = true; }
+      const b = n.body.replace(re, `$1#${nw}`);
+      if (b !== n.body) { n.body = b; ch = true; }
+      if (ch) { n.updated = Date.now(); ids.push(id); }
+    }
+    if (meta.colors[old] != null) {
+      if (meta.colors[nw] == null) meta.colors[nw] = meta.colors[old];
+      delete meta.colors[old]; meta.updated = Date.now(); ids.push("__meta");
+    }
+    if (view === old) view = nw;
+    persist(ids); renderAll();
+    const c = ids.filter((i) => i !== "__meta").length;
+    toast(`#${old} virou #${nw} em ${c} ${c === 1 ? "nota" : "notas"}`);
+  }
+  function removeTag(tag) {
+    const re = tagRegex(tag), ids = [];
+    for (const [id, n] of Object.entries(notes)) {
+      let ch = false;
+      if (n.tags.includes(tag)) { n.tags = n.tags.filter((t) => t !== tag); ch = true; }
+      const b = n.body.replace(re, (m, pre) => pre + m.slice(pre.length + 1));
+      if (b !== n.body) { n.body = b; ch = true; }
+      if (ch) { n.updated = Date.now(); ids.push(id); }
+    }
+    if (view === tag) view = null;
+    persist(ids); renderAll();
+    toast(`Tag #${tag} removida de ${ids.length} ${ids.length === 1 ? "nota" : "notas"}`);
+  }
+  function closeOverlay() { $("overlay").hidden = true; $("overlay").replaceChildren(); }
+  function openTagEditor(tag) {
+    const ov = $("overlay");
+    const name = el("input", { id: "tag-rename", class: "field", value: tag, "aria-label": "Novo nome da tag" });
+    const hint = el("p", { class: "hint" });
+    const save = el("button", { class: "btn primary", text: "Renomear" });
+    const target = () => { const v = normTag(name.value); return v && v !== tag ? v : null; };
+    const upd = () => {
+      const v = target(), exists = v && allTags().includes(v);
+      hint.textContent = exists ? `#${v} já existe. Ao salvar, as duas tags viram uma só.` : "Muda o nome em todas as notas, inclusive onde a tag está escrita no texto.";
+      save.textContent = exists ? "Juntar tags" : "Renomear";
+    };
+    name.addEventListener("input", upd);
+    name.addEventListener("keydown", (e) => { if (e.key === "Enter") save.click(); });
+    save.addEventListener("click", () => { const v = target(); closeOverlay(); if (v) renameTag(tag, v); });
+    upd();
+
+    const sw = el("div", { class: "swatches" });
+    const setColor = (h) => { if (h == null) delete meta.colors[tag]; else meta.colors[tag] = h; meta.updated = Date.now(); persist("__meta"); drawSw(); refresh(); };
+    const head = el("h2", {}, dotEl(tag), "#" + tag);
+    function drawSw() {
+      head.firstChild.style.background = tagColor(tag);
+      sw.replaceChildren(...HUES.map((h) => {
+        const b = el("button", { class: "swatch", "aria-label": "Usar esta cor", "aria-pressed": String(meta.colors[tag] === h), onclick: () => setColor(h) });
+        b.style.background = `hsl(${h} 62% 52%)`;
+        return b;
+      }), el("button", { class: "btn small", "aria-pressed": String(meta.colors[tag] == null), text: "Automática", onclick: () => setColor(null) }));
+    }
+    drawSw();
+
+    const remWrap = el("div");
+    const remBtn = el("button", { class: "btn small", text: "Tirar esta tag de todas as notas", onclick: () => {
+      remWrap.replaceChildren(el("div", { class: "confirm" },
+        el("span", { text: "As notas continuam; só a tag sai." }),
+        el("button", { class: "btn small danger", text: "Tirar a tag", onclick: () => { closeOverlay(); removeTag(tag); } }),
+        el("button", { class: "btn small", text: "Cancelar", onclick: () => remWrap.replaceChildren(remBtn) })));
+    } });
+    remWrap.append(remBtn);
+
+    ov.replaceChildren(el("div", { class: "panel", role: "dialog", "aria-modal": "true", "aria-label": "Editar tag " + tag },
+      head,
+      el("section", {}, el("div", { class: "label", text: "Nome" }), el("div", { class: "row" }, name, save), hint),
+      el("section", {}, el("div", { class: "label", text: "Cor" }), sw),
+      el("section", {}, remWrap),
+      el("div", { class: "panel-foot" }, el("button", { class: "btn", text: "Fechar", onclick: closeOverlay }))));
+    ov.hidden = false;
+    name.focus(); name.select();
+  }
+  $("overlay").addEventListener("click", (e) => { if (e.target === $("overlay")) closeOverlay(); });
+
+  // ---------- exportar e importar ----------
+  const today = () => new Date().toISOString().slice(0, 10);
+  async function download(filename, text, mime) {
+    if (dlCap) {
+      try { await dlCap.save({ filename, data: text }); toast("Arquivo salvo"); }
+      catch (e) { if (e && e.code !== "declined") toast("Não foi possível baixar o arquivo aqui."); }
+      return;
+    }
+    const url = URL.createObjectURL(new Blob([text], { type: mime }));
+    const a = el("a", { href: url, download: filename });
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function exportJson() {
+    const list = Object.entries(notes).map(([id, n]) => ({ id, ...n }));
+    download(`caderno-backup-${today()}.json`, JSON.stringify({ app: "caderno-de-tags", version: 2, exportedAt: new Date().toISOString(), meta, notes: list }, null, 2), "application/json");
+  }
+  function exportMd() {
+    const iso = (t) => new Date(t).toISOString().slice(0, 10);
+    const list = visibleAllLive();
+    const md = list.map((n) => [
+      "<!-- nota -->",
+      "# " + (n.title || "Sem título"),
+      n.tags.length ? "tags: " + n.tags.map((t) => "#" + t).join(" ") : null,
+      `criada: ${iso(n.created)} · editada: ${iso(n.updated)}${n.pinned ? " · fixada" : ""}`,
+      "",
+      n.body.trim(),
+      "",
+    ].filter((l) => l !== null).join("\n")).join("\n");
+    download(`caderno-notas-${today()}.md`, md || "Nenhuma nota.\n", "text/markdown");
+  }
+  function visibleAllLive() {
+    return Object.values(notes).filter((n) => !n.deletedAt).sort((a, b) => (b.pinned - a.pinned) || b.updated - a.updated);
+  }
+  function parseMd(text, fallbackTitle) {
+    const chunks = /^<!-- nota -->\s*$/m.test(text) ? text.split(/^<!-- nota -->\s*$/m) : [text];
+    const out = [];
+    for (const raw of chunks) {
+      if (!raw.trim()) continue;
+      const lines = raw.replace(/^\s*\n/, "").split("\n");
+      let title = fallbackTitle, tags = [], pinned = false, created = Date.now();
+      if (/^#\s+/.test(lines[0] || "")) title = lines.shift().replace(/^#\s+/, "").trim();
+      if (/^tags:/i.test(lines[0] || "")) tags = lines.shift().replace(/^tags:/i, "").split(/[\s,]+/).map(normTag).filter(Boolean);
+      if (/^criada:/i.test(lines[0] || "")) {
+        const l = lines.shift(), m = l.match(/criada:\s*(\d{4}-\d{2}-\d{2})/i);
+        if (m) created = Date.parse(m[1]) || created;
+        pinned = /fixada/.test(l);
+      }
+      out.push(sanitize({ title, tags, pinned, created, updated: Date.now(), body: lines.join("\n").trim() }));
+    }
+    return out;
+  }
+  async function importFiles(files) {
+    const ids = []; let skipped = 0, bad = 0;
+    for (const f of files) {
+      let text;
+      try { text = await f.text(); } catch { bad++; continue; }
+      if (/\.json$/i.test(f.name)) {
+        let data;
+        try { data = JSON.parse(text); } catch { bad++; continue; }
+        const list = Array.isArray(data) ? data : Array.isArray(data.notes) ? data.notes : null;
+        if (!list) { bad++; continue; }
+        for (const item of list) {
+          if (!item || typeof item !== "object") continue;
+          const id = typeof item.id === "string" && /^[\w.~:@+-]{1,64}$/.test(item.id) && item.id !== "__meta" ? item.id : uid();
+          const inc = sanitize(item);
+          if (notes[id] && notes[id].updated >= inc.updated) { skipped++; continue; }
+          notes[id] = inc; delete tombs[id]; ids.push(id);
+        }
+        if (data.meta) {
+          const m = sanitizeMeta(data.meta);
+          for (const [t, h] of Object.entries(m.colors)) if (meta.colors[t] == null) meta.colors[t] = h;
+          meta.updated = Date.now(); ids.push("__meta");
+        }
+      } else {
+        for (const n of parseMd(text, f.name.replace(/\.[^.]+$/, ""))) { const id = uid(); notes[id] = n; ids.push(id); }
+      }
+    }
+    if (ids.length) await persist(ids);
+    renderAll();
+    const c = ids.filter((i) => i !== "__meta").length;
+    const parts = [`${c} ${c === 1 ? "nota importada" : "notas importadas"}`];
+    if (skipped) parts.push(`${skipped} já estavam atualizadas`);
+    if (bad) parts.push(`${bad} ${bad === 1 ? "arquivo não pôde ser lido" : "arquivos não puderam ser lidos"}`);
+    toast(parts.join(" · "));
+  }
+  $("exp-json").addEventListener("click", exportJson);
+  $("exp-md").addEventListener("click", exportMd);
+  $("imp-btn").addEventListener("click", () => $("imp-file").click());
+  $("imp-file").addEventListener("change", (e) => { const fs = [...e.target.files]; e.target.value = ""; if (fs.length) importFiles(fs); });
+
+  // ---------- aviso ----------
+  let toastT;
+  function toast(msg, label, action) {
+    const t = $("toast");
+    t.replaceChildren(el("span", { text: msg }));
+    if (label) t.append(el("button", { text: label, onclick: () => { t.hidden = true; action(); } }));
+    t.hidden = false;
+    clearTimeout(toastT);
+    toastT = setTimeout(() => { t.hidden = true; }, 6000);
+  }
+
+  // ---------- sincronização (Supabase, só na versão do GitHub) ----------
+  function renderSync() {
+    const box = $("sync");
+    if (IN_ARTIFACT) { box.hidden = true; return; }
+    box.hidden = false;
+    if (!HAS_CLOUD) {
+      box.replaceChildren(el("span", { text: "Para ver as notas em outros aparelhos, configure a sincronização no arquivo config.js (passo a passo no README)." }));
+      return;
+    }
+    if (!sb) { box.replaceChildren(el("span", { text: "Carregando a sincronização…" })); return; }
+    if (sbUser) {
+      box.replaceChildren(
+        el("span", {}, "Sincronizando com ", el("strong", { text: sbUser.email || "sua conta" })),
+        el("div", { class: "row" },
+          el("button", { class: "btn small", text: "Sincronizar agora", onclick: () => cloudPull() }),
+          el("button", { class: "btn small", text: "Sair", onclick: () => sb.auth.signOut() })));
+      return;
+    }
+    const email = el("input", { id: "sync-email", class: "field", type: "email", placeholder: "seu@email.com", "aria-label": "E-mail para entrar", autocomplete: "email" });
+    const msg = el("span", { text: "Entre com seu e-mail para ver as mesmas notas no celular e no computador." });
+    const form = el("form", { class: "row" }, email, el("button", { class: "btn small primary", type: "submit", text: "Entrar" }));
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const v = email.value.trim();
+      if (!v) return;
+      msg.textContent = "Enviando o link…";
+      const { error } = await sb.auth.signInWithOtp({ email: v, options: { emailRedirectTo: location.origin + location.pathname } });
+      msg.textContent = error ? "Não foi possível enviar o link. Confira o e-mail e tente de novo." : "Pronto! Abra o link que chegou no seu e-mail, neste mesmo navegador.";
+    });
+    box.replaceChildren(msg, form);
+  }
+  function loadScript(src) {
+    return new Promise((res, rej) => { const s = el("script", { src }); s.onload = res; s.onerror = rej; document.head.append(s); });
+  }
+  async function initCloud() {
+    renderSync();
+    try {
+      await loadScript("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js");
+      sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey);
+      sb.auth.onAuthStateChange((_ev, session) => { setTimeout(() => setCloudUser(session ? session.user : null), 0); });
+      const { data } = await sb.auth.getSession();
+      setCloudUser(data.session ? data.session.user : null);
+    } catch {
+      setState("Não foi possível carregar a sincronização. As notas continuam salvas neste navegador.");
+    }
+    renderSync();
+  }
+  function setCloudUser(u) {
+    const before = sbUser && sbUser.id;
+    sbUser = u;
+    if (u) { mode = "cloud"; if (before !== u.id) cloudPull(); }
+    else if (mode === "cloud") { mode = "local"; setState("Salvo neste navegador"); }
+    renderSync();
+  }
+  async function cloudPush(ids) {
+    if (!sb || !sbUser) return;
+    const rows = ids.map((id) => {
+      const data = id === "__meta" ? meta : (notes[id] || tombs[id]);
+      return data ? { user_id: sbUser.id, id, data, updated_at: new Date(data.updated || Date.now()).toISOString() } : null;
+    }).filter(Boolean);
+    if (!rows.length) return;
+    const { error } = await sb.from("notes").upsert(rows, { onConflict: "user_id,id" });
+    setState(error ? "Sem conexão com a nuvem agora. As notas continuam salvas neste navegador." : "Sincronizado");
+  }
+  function mergeIn(id, d) {
+    if (!d || typeof d !== "object") return;
+    if (id === "__meta") { if ((d.updated || 0) > meta.updated) meta = sanitizeMeta(d); return; }
+    if (timers[id]) return;
+    const local = notes[id] || tombs[id];
+    if (local && (d.updated || 0) <= local.updated) return;
+    if (d.purged) { delete notes[id]; tombs[id] = { purged: true, updated: d.updated }; if (current === id) current = null; }
+    else { notes[id] = sanitize(d); delete tombs[id]; }
+  }
+  let pulling = false;
+  async function cloudPull() {
+    if (!sb || !sbUser || pulling) return;
+    pulling = true;
+    try {
+      setState("Sincronizando…");
+      const { data, error } = await sb.from("notes").select("id,data");
+      if (error) { setState("Não foi possível sincronizar agora. Tente de novo em instantes."); return; }
+      const remote = {};
+      for (const r of data) { remote[r.id] = r.data; mergeIn(r.id, r.data); }
+      const push = [];
+      const older = (id, u) => !remote[id] || (remote[id].updated || 0) < u;
+      for (const [id, n] of Object.entries(notes)) if (older(id, n.updated)) push.push(id);
+      for (const [id, t] of Object.entries(tombs)) if (older(id, t.updated)) push.push(id);
+      if (older("__meta", meta.updated) && meta.updated) push.push("__meta");
+      saveLocal();
+      if (push.length) await cloudPush(push); else setState("Sincronizado");
+      refresh();
+    } finally { pulling = false; }
+  }
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && mode === "cloud") cloudPull(); });
+  setInterval(() => { if (!document.hidden && mode === "cloud") cloudPull(); }, 60000);
+
+  // ---------- teclado e controles ----------
+  $("new-btn").addEventListener("click", newNote);
+  $("search").addEventListener("input", (e) => { query = e.target.value; renderList(); });
+  $("sort").value = prefs.sort;
+  $("sort").addEventListener("change", (e) => { prefs.sort = e.target.value; savePrefs(); renderList(); });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      if (!$("overlay").hidden) { closeOverlay(); return; }
+      if ($("app").classList.contains("focus")) { setFocus(false); return; }
+    }
+    if (e.ctrlKey && e.altKey) {
+      const k = e.key.toLowerCase();
+      if (k === "n") { e.preventDefault(); newNote(); }
+      else if (k === "p") { e.preventDefault(); togglePreview(); }
+      else if (k === "f") { e.preventDefault(); setFocus(!$("app").classList.contains("focus")); }
+    }
+  });
+
+  // ---------- inicialização ----------
+  function afterReady() {
+    const old = Object.entries(notes).filter(([, n]) => n.deletedAt && Date.now() - n.deletedAt > TRASH_DAYS * DAY).map(([id]) => id);
+    if (old.length) purge(old);
+  }
+  function startLocal() {
+    mode = "local";
+    notes = {};
+    for (const [id, d] of Object.entries(lsGet(K.notes, {}))) if (d && typeof d === "object") notes[id] = sanitize(d);
+    meta = sanitizeMeta(lsGet(K.meta, {}));
+    tombs = lsGet(K.tombs, {}) || {};
+    ready = true;
+    afterReady();
+    setState("Salvo neste navegador");
+    renderAll();
+  }
+  function startDb(db, userId) {
+    mode = "db";
+    dbCol = db.collection("data/users/" + userId);
+    setState("Suas notas são privadas e ficam salvas na sua conta");
+    dbCol.onSnapshot((snap) => {
+      for (const ch of snap.docChanges()) {
+        const id = ch.doc.id;
+        if (id === "__meta") { if (ch.type !== "removed") meta = sanitizeMeta(ch.doc.data()); continue; }
+        if (ch.type === "removed") { if (!timers[id] && !writing[id]) { delete notes[id]; if (current === id) current = null; } continue; }
+        if (timers[id] || writing[id] || ch.doc.metadata.hasPendingWrites) continue;
+        const inc = sanitize(ch.doc.data());
+        if (!notes[id] || inc.updated >= notes[id].updated) notes[id] = inc;
+      }
+      if (!ready) { ready = true; afterReady(); }
+      refresh();
+    }, () => setState("A conexão caiu. Recarregue a página para continuar salvando."));
+  }
+
+  renderAll();
+  renderSync();
+  (async () => {
+    if (IN_ARTIFACT) {
+      try {
+        const [db, user, dl] = await Promise.all([window.claude.use("db"), window.claude.use("user"), window.claude.use("downloads")]);
+        dlCap = dl;
+        const userId = user ? await user.id() : null;
+        if (db && userId) { startDb(db, userId); return; }
+      } catch {}
+    }
+    startLocal();
+    if (HAS_CLOUD) initCloud();
+  })();
+})();
+</script>
